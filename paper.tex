@@ -18,8 +18,18 @@
 \usepackage{tikz} 
 \usetikzlibrary{matrix}
 
+\usepackage{graphicx}
+%\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+%\usepackage{algorithmicx}
+%\usepackage{algpseudocode}
+\usepackage{subcaption}
+%\usepackage{booktabs}
 
-\title{Some not that novel approach to image processing using nonparametric statistic learned from course}
+
+\title{Some not that novel approach to image processing using nonparametric statistic}
+
 
 %\date{September 9, 1985}	% Here you can change the date presented in the paper title
 %\date{} 					% Or removing it
@@ -55,75 +65,172 @@ image processing problem.
 
 
 
-\section{Data of image processing}
+\subsection{Data format of image}
 %\label{sec:headings}
 %\lipsum[4] See Section \ref{sec:headings}.
 
-RGB image can seen as a 3 variable function $f(i,j,c)$, $i,j$ denote the location of image, $c$ denotes
-channel. The function can be coded by three matrixes as shown in Fig~\ref{fig:fig1}.
+Colored(RGB) image can seen as a 3 variables function  $f(i,j,c)$, where $i,j$ denote the location of image, $c$ denotes
+channel(reg, green, blue). The function can be encoded by three matrixes as shown in Fig~\ref{fig:toad_rgb}.
 
 \begin{figure}[htb]
   \centering
-  \begin{tikzpicture}
-      \node[inner sep=0pt] (toad_rgb) at (0,0)
-      {\includegraphics[width=.18\textwidth]{images/toad_rgb.png}};
-      \node[inner sep=0pt] (toad_r) at (2.5,0)
-      {\includegraphics[width=.18\textwidth]{images/toad_r.png}};
-      \node[inner sep=0pt] (toad_g) at (5,0)
-      {\includegraphics[width=.18\textwidth]{images/toad_g.png}};
-      \node[inner sep=0pt] (toad_b) at (7.5,0)
-      {\includegraphics[width=.18\textwidth]{images/toad_b.png}};
-      
-      \draw [->] (toad_rgb.south) to [out=355, in=185] (toad_r.south);
-      \draw [->] (toad_rgb.south) to [out=350, in=190] (toad_g.south);
-      \draw [->] (toad_rgb.south) to [out=345, in=195] (toad_b.south);
-
-      \draw [red] (7.5, 0.05) -- (7.6, 0.05) -- (7.6,-0.05) -- (7.5, -0.05) -- (7.5, 0.05);
-
-      %\node (10.0,0.0) {$$\begin{bmatrix} 1 & 1 \\ 2 & 2 \end{bmatrix}$$};
-      \matrix [matrix of nodes,row sep=-1ex, column sep=-1ex] (toad_mat) at (10.0, 0.0)
-      {
-          5 & 7 & 10 & 10 & 11 & 4 \\
-          6 & 8 & 8 & 10 & 10 & 5 \\
-          5 & 6 & 8 & 8 & 7 & 4 \\
-          6 & 5 & 6 & 5 & 7 & 5 \\
-          6 & 6 & 4 & 5 & 4 & 4 \\
-          5 & 5 & 4 & 2 & 3 & 6  \\  };
-
-      \draw [->] (7.6, 0.05) -- (toad_mat.north west);
-      \draw [->] (7.6,-0.05) -- (toad_mat.south west);
-
-      % draw matrix frame, how stupid I need to write it manually.
-      \draw ([shift={(0.15, 0.0)}]toad_mat.north west) -- 
-          ([shift={(0.05, 0.0)}]toad_mat.north west) --
-          ([shift={(0.05, 0.0)}]toad_mat.south west) --
-          ([shift={(0.15, 0.0)}]toad_mat.south west);
-
-      \draw ([shift={(-0.15, 0.0)}]toad_mat.north east) -- 
-          ([shift={(-0.05, 0.0)}]toad_mat.north east) --
-          ([shift={(-0.05, 0.0)}]toad_mat.south east) --
-          ([shift={(-0.15, 0.0)}]toad_mat.south east);
-
-      \node at ([shift={(0.0, 0.2)}]toad_rgb.north) {RGB};
-      \node at ([shift={(0.0, 0.2)}]toad_r.north) {R};
-      \node at ([shift={(0.0, 0.2)}]toad_g.north) {G};
-      \node at ([shift={(0.0, 0.2)}]toad_b.north) {B};
-      \node at ([shift={(0.0, 0.2)}]toad_mat.north) {matrix of the crop};
-      
-
-      \draw[help lines] (0,0) grid (10,-10);
-  \end{tikzpicture}
+  \input{tikzpictures/toad_rgb}
   \caption{Representation: Image as three matrix}
-  \label{fig:fig1}
+  \label{fig:toad_rgb}
 \end{figure}
- 
-\section{Jack}
 
-\subsection{Headings: second level}
+Since the colored image introduce extra complexity, in this paper the gray image is used for simplicity.
+Instead of three matrices, the gray image is represented by a single matrix which is given by:
+
+$$
+f_{gray}(i,j) = 0.21 f_{rgb}(i,j,1) + 0.72 f_{rgb}(i,j,2) + 0.07 f_{rgb}(i,j,3)
+$$
+
+Sometimes to "flatten" a matrix to a long vector is a useful viewpoint. There're two order to flatten a matrix,
+row-major and column-major. The row-major is used in Python(Numpy) and the column-major is used by R and MatLab.
+As my preferred language, row-major order of Python is illustrated as Fig~\ref{fig:flatten_matrix}.
+
+\begin{figure}[htb]
+  \centering
+  \input{tikzpictures/flatten_matrix}
+  \caption{Flatten a matrix by row}
+  \label{fig:flatten_matrix}
+\end{figure}
+
+
+As a application we can model the vector as i.i.d sample of some distribution using simpler symbol, the most 
+common practice is to represent them as a histogram, see Fig~\ref{fig:map_gray_to_hist}.
+
+\begin{figure}[htb]
+  \centering
+  \input{tikzpictures/map_gray_to_hist}
+  \caption{Mapping from gray image to histogram}
+  \label{fig:map_gray_to_hist}
+\end{figure}
+
+\subsection{Inverse problem in image processing}
+
+As presented in \cite{dong2015image}, we usually regard image as a result of combination of some "observe"
+function and noise. In its simplest form, we can write:
+
+\begin{equation}
+\mathbf{f} = \mathbf{A} \mathbf{x} + \mathbf{\eta}
+\label{eq:inverse_problem}
+\end{equation}
+
+where $\mathbf{f}$ denote a (gray) image, $\mathbf{A}$ is a linear operation, $\mathbf{x}$ is "true" image,
+$\mathbf{\eta}$ is noise.
+ 
+\section{Smoothing: nonparametric statistic and image processing}
+
+There exists a fully equivalence which can be shown on smoothing problem.
+
+\cite{wasserman2006all} state regression for pairs $(x_1,Y_1,\dots,x_n,Y_n)$ like:
+
+$$
+Y_i = r(x_i) + \epsilon_i
+$$
+
+Replacing $x_i$ with $x_{ij}=(i,j)$ ($i,j$ denote coordinates of corresponding pixel on image), compared to Eq~\ref{eq:inverse_problem},
+so the $r(x_{i,j})=r(i,j)$ denote the complex true image function. 
+It's obvious that we can not specify a simple parametric model on it (For some possible parametric image model,
+see Fig~\ref{fig:parametric_model} ) so that the the noise derived from underestimated model will cause misunderstanding. 
+Thus we must employ a nonparametric fashion though computer scientist may not aware it explicitly.
+
+\begin{figure}[htb]
+  \centering
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_1.png}
+    \caption{$y_{ij} = i+j$}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_2.png}
+    \caption{$y_{ij} = \log(1+i)+\log(1+j)$}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_3.png}
+    \caption{$y_{ij} = \sin(i)+\sin(j)$}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_4.png}
+    \caption{$y_{ij} = \sin(0.1i)+\sin(0.1j)$}
+  \end{subfigure}
+  \caption{Simple parametric model can't capture big picture of image.}
+  \label{fig:parametric_model}
+\end{figure}
+
+
+\subsection{Kernel regression}
 %\lipsum[5]
 %\begin{equation}
 %\xi _{ij}(t)=P(x_{t}=i,x_{t+1}=j|y,v,w;\theta)= {\frac {\alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}{\sum _{i=1}^{N} \sum _{j=1}^{N} \alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}}
 %\end{equation}
+
+As stated in \cite{solomon2011fundamentals}, a mean filtering, as simplest filter technology, give same weight to neibor pixel to smooth the
+noised to remove noise(try to find true$r(i,j)$). Concretely, here's a instance of $3 \times 3$ filtering:
+
+\begin{equation}
+g(i,j) = \frac{1}{9} \sum_{di=-1}^1 \sum_{dj=-1}^1 f(i+di,j+dj)
+\label{eq:mean_filter}
+\end{equation}
+
+If we set kernel function as:
+
+$$ 
+K(x_{i,j},y_{i,j}) =  
+\begin{cases}
+  1, & \text{if $ |i_x - i_y| \le 1$ and $|j_x - j_y| \le 1$} \\
+  0, & \text{otherwise}
+\end{cases}
+$$
+
+Which is a nature two-variables extension from box-car kernel introduced by \cite{wasserman2006all}.
+Then the kernel regression given by:
+
+$$
+\hat{r}(x_{i,j}) = \frac{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t}) Y_{s,t}}{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t})}
+$$
+
+is equivalence to Eq~\ref{eq:mean_filter}. A example can be shown in Fig~\ref{fig:effect_noise_removal}. 
+The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression.
+
+Mean filtering is usually weaker than median filtering, a example is shown in Fig~\ref{fig:effect_noise_removal}. 
+Though median filtering is also a linear smoother $\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}$, 
+a instance of its hat-matrix may be $ l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median}) $. 
+Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neiborhood of given pixel $(i,j)$.
+
+But obviously it can not be included by kernel regression, say, 
+we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
+
+Following textbook \cite{wasserman2006all}, we can try to find different improvment other than mean-filter 
+or rank-filter, for example, local regression. 
+
+\begin{figure}[htb]
+  \centering
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_1.png}
+    \caption{Kernel regression(h=1)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_2.png}
+    \caption{Kernel regression(h=10)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_3.png}
+    \caption{Median regression}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/parametric_model_4.png}
+    \caption{Local regression}
+  \end{subfigure}
+  \caption{Simple parametric model can't capture big picture of image.}
+  \label{fig:effect_noise_removal}
+\end{figure}
+
+
+\subsection{Local Regression}
+
+\subsection{Variance estimation introduced by smoothing}
 
 \subsubsection{Headings: third level}
 \lipsum[6]

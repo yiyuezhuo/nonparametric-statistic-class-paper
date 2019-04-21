@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+    \node[inner sep=0pt] (toad_rgb) at (-2.5,0)
+    {\includegraphics[width=.15\textwidth]{images/toad_rgb.png}};
+    \node[inner sep=0pt] (toad_r) at (0.0,0)
+    {\includegraphics[width=.15\textwidth]{images/toad_r.png}};
+    \node[inner sep=0pt] (toad_g) at (2.5,0)
+    {\includegraphics[width=.15\textwidth]{images/toad_g.png}};
+    \node[inner sep=0pt] (toad_b) at (5.0,0)
+    {\includegraphics[width=.15\textwidth]{images/toad_b.png}};
+    
+    \draw [->] (toad_rgb.south) to [out=355, in=185] (toad_r.south);
+    \draw [->] (toad_rgb.south) to [out=350, in=190] (toad_g.south);
+    \draw [->] (toad_rgb.south) to [out=345, in=195] (toad_b.south);
+
+    % small crop in toad_b
+    %\draw [red] (7.5, 0.05) -- (7.6, 0.05) -- (7.6,-0.05) -- (7.5, -0.05) -- (7.5, 0.05);
+    \draw [red] ([shift={(0.0, 0.05)}]toad_b.center) --
+      ([shift={(0.1, 0.05)}]toad_b.center) --
+      ([shift={(0.1, -0.05)}]toad_b.center) --
+      ([shift={(0.0, -0.05)}]toad_b.center) --
+      ([shift={(0.0, 0.05)}]toad_b.center);
+
+    %\node (10.0,0.0) {$$\begin{bmatrix} 1 & 1 \\ 2 & 2 \end{bmatrix}$$};
+    \matrix [matrix of nodes,row sep=-1ex, column sep=-1ex] (toad_mat) at (7.7, 0.0)
+    {
+        5 & 7 & 10 & 10 & 11 & 4 \\
+        6 & 8 & 8 & 10 & 10 & 5 \\
+        5 & 6 & 8 & 8 & 7 & 4 \\
+        6 & 5 & 6 & 5 & 7 & 5 \\
+        6 & 6 & 4 & 5 & 4 & 4 \\
+        5 & 5 & 4 & 2 & 3 & 6  \\  };
+
+    \draw [->] ([shift={(0.1, 0.05)}]toad_b.center) -- (toad_mat.north west);
+    \draw [->] ([shift={(0.1, -0.05)}]toad_b.center) -- (toad_mat.south west);
+
+    % draw matrix frame, how stupid I need to write it manually.
+    \draw ([shift={(0.15, 0.0)}]toad_mat.north west) -- 
+        ([shift={(0.05, 0.0)}]toad_mat.north west) --
+        ([shift={(0.05, 0.0)}]toad_mat.south west) --
+        ([shift={(0.15, 0.0)}]toad_mat.south west);
+
+    \draw ([shift={(-0.15, 0.0)}]toad_mat.north east) -- 
+        ([shift={(-0.05, 0.0)}]toad_mat.north east) --
+        ([shift={(-0.05, 0.0)}]toad_mat.south east) --
+        ([shift={(-0.15, 0.0)}]toad_mat.south east);
+
+    \node at ([shift={(0.0, 0.2)}]toad_rgb.north) {RGB};
+    \node at ([shift={(0.0, 0.2)}]toad_r.north) {R};
+    \node at ([shift={(0.0, 0.2)}]toad_g.north) {G};
+    \node at ([shift={(0.0, 0.2)}]toad_b.north) {B};
+    \node at ([shift={(0.0, 0.2)}]toad_mat.north) {matrix of the crop};
+    
+    % two example equation to show the function sematic
+    \node (eq1) at  (10.0, 0.2) {$f(84, 72, 2)$};
+    \node (eq2) at  (10.0,-0.2) {$f(85, 72, 2)$};
+
+    \draw [->] ([shift={(-0.2, 0.2)}]toad_mat.east) -- (eq1);
+    \draw [->] ([shift={(-0.2, -0.2)}]toad_mat.east) -- (eq2);
+
+    %\draw[help lines] (0,0) grid (10,-10);
+\end{tikzpicture}

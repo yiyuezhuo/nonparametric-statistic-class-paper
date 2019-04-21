@@ -1,0 +1,9 @@
+\begin{tikzpicture}
+    \node[inner sep=0pt, anchor=west] (toad_gray) at (0,0)
+    {\includegraphics[width=.15\textwidth]{images/toad_gray.png}};
+    \node[inner sep=0pt, anchor=west] (toad_hist) at ([shift={(0.5, 0.0)}]toad_gray.east)
+    {\includegraphics[width=.15\textwidth]{images/toad_hist.png}};
+
+    \draw [->] (toad_gray.east) -- (toad_hist.west);
+
+\end{tikzpicture}

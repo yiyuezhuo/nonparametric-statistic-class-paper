@@ -1,0 +1,26 @@
+\begin{tikzpicture}
+    \matrix [matrix of nodes,row sep=-1ex, column sep=-1ex, anchor=west] (toad_mat) at (0.0, 0.0)
+    {
+        5 & 7 & 10 & 10 & 11 & 4 \\
+        6 & 8 & 8 & 10 & 10 & 5 \\
+        5 & 6 & 8 & 8 & 7 & 4 \\
+        6 & 5 & 6 & 5 & 7 & 5 \\
+        6 & 6 & 4 & 5 & 4 & 4 \\
+        5 & 5 & 4 & 2 & 3 & 6  \\  };
+    
+    \matrix [matrix of nodes,row sep=-1ex, column sep=-1ex, anchor=west] (toad_r1) at ([shift={(0.4, 0.00)}]toad_mat.east)
+    {
+        5 & 7 & 10 & 10 & 11 & 4 \\};
+
+    \matrix [matrix of nodes,row sep=-1ex, column sep=-1ex, anchor=west] (toad_r2) at ([shift={(0.4, 0.00)}]toad_r1.east)
+    {
+        6 & 8 & 8 & 10 & 10 & 5 \\};
+    
+    \node (ellipsis) at  ([shift={(0.4, 0.00)}]toad_r2.east) {......};
+
+    %\draw [->] ([shift={(0.05, 0.00)}]toad_mat.east ) -- ([shift={(-0.1, 0.00)}]toad_r1.west);
+    %\draw [->] ([shift={(0.05, -0.60)}]toad_mat.east ) -- ([shift={(-0.1, 0.00)}]toad_r2.west);
+    \draw [->] ([shift={(0.05, -0.40)}]toad_mat.north east) to [out=0, in=180] ([shift={(-0.1, 0.00)}]toad_r1.west);
+    \draw [->] ([shift={(0.05, -0.75)}]toad_mat.north east) to [out=0, in=160] ([shift={(-0.1, 0.00)}]toad_r2.west);
+
+\end{tikzpicture}
