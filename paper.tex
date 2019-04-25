@@ -192,43 +192,75 @@ $$
 $$
 
 is equivalence to Eq~\ref{eq:mean_filter}. A example can be shown in Fig~\ref{fig:effect_noise_removal}. 
-The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression.
+The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression. 
+We can see that $h=5$(mean kernel = $11 \times 11 $) lead to over-smooth $\hat{r}$, $h=1$ seems under-smoothed,
+the result of median seems fine.
 
 Mean filtering is usually weaker than median filtering, a example is shown in Fig~\ref{fig:effect_noise_removal}. 
-Though median filtering is also a linear smoother $\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}$, 
-a instance of its hat-matrix may be $ l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median}) $. 
+Though median filtering is also a linear smoother: 
+
+$$
+\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}$$
+
+its hat-matrix can be represented as: 
+
+$$ 
+l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median}) 
+$$
+
 Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neiborhood of given pixel $(i,j)$.
 
 But obviously it can not be included by kernel regression, say, 
 we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
 
 Following textbook \cite{wasserman2006all}, we can try to find different improvment other than mean-filter 
-or rank-filter, for example, local regression. 
+(i.e. gaussian kernel regression(filtering) using gaussian kernel) or rank-filter, 
+for example, local polynomial regression. 
 
 \begin{figure}[htb]
   \centering
   \begin{subfigure}[b]{0.24\linewidth}
-    \includegraphics[width=\linewidth]{images/parametric_model_1.png}
+    \includegraphics[width=\linewidth]{images/noise_removal_1.png}
+    \caption{Noised toad}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/noise_removal_2.png}
     \caption{Kernel regression(h=1)}
   \end{subfigure}
   \begin{subfigure}[b]{0.24\linewidth}
-    \includegraphics[width=\linewidth]{images/parametric_model_2.png}
-    \caption{Kernel regression(h=10)}
+    \includegraphics[width=\linewidth]{images/noise_removal_3.png}
+    \caption{Kernel regression(h=5)}
   \end{subfigure}
   \begin{subfigure}[b]{0.24\linewidth}
-    \includegraphics[width=\linewidth]{images/parametric_model_3.png}
-    \caption{Median regression}
+    \includegraphics[width=\linewidth]{images/noise_removal_4.png}
+    \caption{Median regression(h=3)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
-    \includegraphics[width=\linewidth]{images/parametric_model_4.png}
-    \caption{Local regression}
-  \end{subfigure}
-  \caption{Simple parametric model can't capture big picture of image.}
+  \caption{$\hat{r}(x_{i,j})$}
   \label{fig:effect_noise_removal}
 \end{figure}
 
 
-\subsection{Local Regression}
+\subsection{Local Polynomial Regression}
+
+Basically, polynomial regression fit a "delta" model $f_{i,j}(di,dj)$ for every points $(i,j)$, and use $f(0,0)$
+as estimation of $\hat{r}(x_{i,j})$. Especially, the linear formulation with kernel weighting is most 
+interesting considering higher order may causing numerical problem.
+
+The vanilla equation,
+
+$$
+\mathbf{l}(x) = e_1^T (X_x^T W_x X_x)^{-1} X_x^T W_x
+$$
+
+may lead too large matrix $W_x$ ($23520 \times 23520$), so the broadcast is used to represent the matrix as 
+$23520$ vector.
+
+
+
+\subsection{Cross validation for smoothing}
+
+Since the image usually include too many data point. Using local property appearing in image processing 
+will be helpful when evaluate the leave-one-out cross-validation score.
 
 \subsection{Variance estimation introduced by smoothing}
 
