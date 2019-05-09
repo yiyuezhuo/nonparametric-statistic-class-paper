@@ -255,14 +255,15 @@ $$
 may lead too large matrix $W_x$ ($23520 \times 23520$), so the broadcast is used to represent the matrix as 
 $23520$ vector. However, fit a model $23520$ times using slightly different parameters is inevitable. 
 The result seems nice more than results given by kernel regression and median filter, 
-as shown in Fig~\ref{fig:local_poly}. The "true" mean the model is applied on true image instead of noised image,
-we can see the detail is keeped finely compared to other methods which may over-smooth even in "true" image.
+as shown in Fig~\ref{fig:local_poly} \footnote{The above related code is written in Python and following related code is written in Julia}.  
+The "true" mean the model is applied on true image instead of noised image,
+we can see the detail is kept finely compared to other methods which may over-smooth even in "true" image.
 The right one show $h=1$ result of smoothing, we can see the result may not be better than median regression especially considering
-it costy computation time. 
+it costly computation time. 
 
-And it can also provide variance information. The second subfig show the value of linear, it show the linear
-"trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as sobel operation and LoG
-in image processing, see Fig~\ref{fig:edge}. It's resonable since the edge is so called high frequency feature, hence the extremely
+And it can also provide variance information. The second sub-fig show the value of linear, it show the linear
+"trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
+in image processing, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
 change matched by different methods will give consistent response as seen in above figure.
 
 \begin{figure}[htb]
@@ -323,23 +324,27 @@ R(h) = E(\frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2)
 $$
 
 for given $h,\sigma$ (the randomness of $\hat{r}_n(x_i)$ is subject to std paramater of noise term $\sigma$) 
-can be approxinated by Monte Calor simulation:
+can be approximated by Monte Calor simulation:
 
 $$
 R(h) \approx \frac{1}{T} \sum_{t=1}^T \frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2
 $$
 
-The $T$ is number of simulation, here $T=200$ is used. See Fig~\ref{fig:crossvalidation}. It's obvious that the optimal $h \approx 0.75$.
+The $T$ is number of simulation, here $T=200$ is used. See Fig~\ref{fig:crossvalidation}
+\footnote{Note Julia treat gray image as $[0,1]$ float number instead of $[0,255]$ in Python. Following content is based on Julia,
+so a $sigma=25$ noise in range $[0,255]$ for MatLab/Python is equivalence to $0.098$ in range $[0,1]$ for Julia.}
+ for result of simulation with mean with 3 $\sigma$. 
+It's obvious that the optimal may located in $h \approx 0.75$ .
 
 \begin{figure}[htb]
   \centering
   \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/crossvalidation1.png}
-    \caption{LPR linear term coef}
+    \caption{Monte Carlo $R(h)$ for the true image}
   \end{subfigure}
   \begin{subfigure}[b]{0.49\linewidth}
-    \includegraphics[width=\linewidth]{images/crossvalidation1.png}
-    \caption{LPR linear term abs coef}
+    \includegraphics[width=\linewidth]{images/crossvalidation2.png}
+    \caption{CV for a given noised image}
   \end{subfigure}
   \caption{How linear term in LPR can be explained as edge detection}
   \label{fig:crossvalidation}
@@ -349,13 +354,77 @@ Of course usually we don't have true function $r(x_i)$, so we want a sample-base
 that is the leave-one-out cross validation score which can be employed to show a guideline to choose optimal bandwidth $h$
 when true function is not observed.
 
-Fortunately, the LOOCV is equivalence to remove the center of the kernel used in fitering. 
+Fortunately, the LOOCV is equivalence to remove the center of the kernel used in filtering, so that we can simplify this to 
+convolution which can be effectively computed by software.
+
+The vanilla equation:
+
+$$
+CV = \hat{R}(h)=\frac{1}{n}\sum_{i=1}^n (Y_i-\hat{r}_{-i}(x_i))^2
+$$
+
+is equivalence to following change of kernel of convolution in gaussian kernel regression, see Fig~\ref{fig:gaussian_kernel}. 
+The result can seen in Fig~\ref{fig:crossvalidation}(b).
+
+\begin{figure}[htb]
+  \centering
+  \input{tikzpictures/gaussian_kernel}
+  \caption{Gaussian kernel used in Leave-one-out cross validation}
+  \label{fig:gaussian_kernel}
+\end{figure}
+
 
 \subsection{Variance estimation introduced by smoothing}
+
+In fact, the image is polluted by some i.i.d noise terms $\epsilon_i \sim N(0,\sigma^2)$ where hold a constant $\sigma$ for every index $i$.
+so that, following \cite{wasserman2006all} Theorem 5.85, we can estimate it by following equation:
+
+$$
+\hat{\sigma}^2=\frac{\sum_{i=1}^n (Y_i-\hat{r}(x+i))^2}{n-2\nu+\tilde{\nu}}
+$$
+
+where
+
+$$
+\nu = \mathrm{tr}(\mathbf{L}), \quad \tilde{\nu}=\mathrm{tr}(\mathbf{L}^T\mathbf{L})=\sum_{i=1}^n||\mathcal{l}(x_i)||^2
+$$
+
+In our setting, let $K$ denote the kernel matrix
+\footnote{The $K$ can be encoded as a sparse 23520 dimension vector $l_i$ which have 25 non-zero value while all other value are zero to match
+the notation used in the textbook, but those tedious transform are omitted for briefly.}
+such as the one shown in Fig~\ref{fig:gaussian_kernel} leftmost.
+$n = 168 \times 140 = 23520$,$\nu = n \times sK[0,0]$,$\tilde{\nu} = \sum_{i=-2}^2\sum_{j=-2}^2 K[i,j]^2$. Set $\sigma=50$(In Julia it's 
+$\sigma=0.098$), the simulation distribution of $\hat{\sigma}^2$ can be seen in Fig~\ref{fig:std_est}. 
+The interesting thing is that all of them fail to cover true point $0.098$, when $h$ become, the bias is even worsen. It's not that 
+surprise considering the consistency condition of estimator, $\nu=o(n),\tilde{\nu}=o(n)$ is not satisfied in this case.
+
+\begin{figure}[htb]
+  \centering
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/std_est_1.png}
+    \caption{Dist of $\hat{\sigma}^2$ ($h=0.2$)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/std_est_2.png}
+    \caption{Dist of $\hat{\sigma}^2$ ($h=0.5$)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/std_est_3.png}
+    \caption{Dist of $\hat{\sigma}^2$ ($h=1.0$)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/std_est_4.png}
+    \caption{Dist of $\hat{\sigma}^2$ ($h=2.0$)}
+  \end{subfigure}
+  \caption{simulation distribution of $\hat{\sigma}^2$(samples = 200)}
+  \label{fig:std_est}
+\end{figure}
+
 
 \section{Semi-parametric regression}
 
 \section{Conclusion}
+
 
 
 
