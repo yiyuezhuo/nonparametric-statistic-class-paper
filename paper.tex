@@ -525,7 +525,7 @@ even early method using MRF\cite{panjwani1995markov}.
 
 Automatically detecting cutoff points through searching on local minimum is subject to some factors. If there is a minimum point, 
 but with very tiny curvature, is it a true minimum point or made by random noise? It may occur more usually when $h$ is not "enough".
-For example, Fig~\ref{fig:DS_REG} show the KDE of red and blue chanels when $h=0.2$ compared to previous $h=0.3$.
+For example, Fig~\ref{fig:DS_REG} show the KDE of red and blue channels when $h=0.2$ compared to previous $h=0.3$.
 We can impose a confidence interval to it to determine. It require technique in \cite{wasserman2006all} section 6.6.
 
 \begin{figure}[htb]
@@ -551,7 +551,16 @@ We can impose a confidence interval to it to determine. It require technique in 
 \end{figure}
 
 
-\section{Bootstrapping and confidence of feature detecting}
+\section{Bootstrap and confidence of feature detecting}
+
+\cite{ghorbel1994bootstrap} propose a interesting idea to use bootstrap in invariant feature for image processing.
+I will extent it for matching.
+
+\subsection{Invariant feature: Hu moments}
+
+A image or patch of image can be summarized by some statistic, such as intensity histogram shown above. If we impose some constraints
+on those statistic, for example, they should be invariant to translate, scale, rotation transform. The valid choose of those statistic
+seems narrow, a excenllent result is obtained by 
 
 \section{Conclusion}
 
