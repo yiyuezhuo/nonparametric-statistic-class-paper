@@ -5,6 +5,9 @@
 
 \usepackage{arxiv}
 
+\usepackage[usenames,dvipsnames]{xcolor} % Why it should be listed before line 16??? https://tex.stackexchange.com/questions/87197/latex-error-option-clash-for-package-xcolor-for-table
+
+
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
 \usepackage{hyperref}       % hyperlinks
@@ -26,6 +29,38 @@
 %\usepackage{algpseudocode}
 \usepackage{subcaption}
 %\usepackage{booktabs}
+
+\usepackage{listings}
+%\usepackage[T1]{fontenc}
+%\usepackage{beramono}
+
+
+%%
+%% Julia definition (c) 2014 Jubobs
+%%
+\lstdefinelanguage{Julia}%
+  {morekeywords={abstract,break,case,catch,const,continue,do,else,elseif,%
+      end,export,false,for,function,immutable,import,importall,if,in,%
+      macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
+      using,while},%
+   sensitive=true,%
+   alsoother={\$},%
+   morecomment=[l]\#,%
+   morecomment=[n]{\#=}{=\#},%
+   morestring=[s]{"}{"},%
+   morestring=[m]{'}{'},%
+}[keywords,comments,strings]%
+
+\lstset{%
+    language         = Julia,
+    basicstyle       = \ttfamily,
+    keywordstyle     = \bfseries\color{blue},
+    stringstyle      = \color{magenta},
+    commentstyle     = \color{ForestGreen},
+    showstringspaces = false,
+}
+
+
 
 
 \title{Some not that novel approach to image processing using nonparametric statistic}
@@ -49,8 +84,9 @@
 \begin{abstract}
 %\lipsum[1]
 This is a class paper for nonparametric statistical. 
-All of methods introduced by \cite{wasserman2006all} will get a example to show how it can be applied on
-image processing problem.
+Some methods introduced by \cite{wasserman2006all} will get a example to show how it can be applied on
+image processing problem, such as kernel regression, local polynomial regression, cross validation, variance estimation
+by smoothing, histogram, kernel density regression and bootstrap.
 \end{abstract}
 
 
@@ -209,12 +245,12 @@ $$
 l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median}) 
 $$
 
-Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neiborhood of given pixel $(i,j)$.
+Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neighborhood of given pixel $(i,j)$.
 
 But obviously it can not be included by kernel regression, say, 
 we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
 
-Following textbook \cite{wasserman2006all}, we can try to find different improvment other than mean-filter 
+Following textbook \cite{wasserman2006all}, we can try to find different improvement other than mean-filter 
 (i.e. gaussian kernel regression(filtering) using gaussian kernel) or rank-filter, 
 for example, local polynomial regression. 
 
@@ -528,6 +564,17 @@ but with very tiny curvature, is it a true minimum point or made by random noise
 For example, Fig~\ref{fig:DS_REG} show the KDE of red and blue channels when $h=0.2$ compared to previous $h=0.3$.
 We can impose a confidence interval to it to determine. It require technique in \cite{wasserman2006all} section 6.6.
 
+Firstly divide the interval [0,1] (Julia treat intensity as number in $[0,1]$ exactly) into $k=100$ bins, which 
+center is denoted by $X_1,\dots,X_k$. Let $N_j$ be the number of observations in bin $j$. define
+
+$$
+Y_j = \sqrt{\frac{k}{n}} \times \sqrt{N_j+\frac{1}{4}}
+$$
+
+So now we have a standard regression problem for data $(X_j,Y_j),j=1,\dots,k$.
+I use kernel regression with $h=1$ to solve it, the result can shown in Fig~\ref{fig:DS_REG}.
+The wide confidence band around those suspicion minimum points indicate that they're fake ones.
+ 
 \begin{figure}[htb]
   \centering
   \begin{subfigure}[b]{0.24\linewidth}
@@ -560,16 +607,301 @@ I will extent it for matching.
 
 A image or patch of image can be summarized by some statistic, such as intensity histogram shown above. If we impose some constraints
 on those statistic, for example, they should be invariant to translate, scale, rotation transform. The valid choose of those statistic
-seems narrow, a excenllent result is obtained by 
+seems narrow, a excellent result is obtained by \cite{hu1962visual}, called Hu moments, which is defined by:
+
+\begin{align}
+  \begin{split}
+    M_{ij} &= \sum_x \sum_y x^i y^i I(x,y) \\
+    \bar{x} &= \frac{M_{10}}{M_{00}} \\
+    \bar{y} &= \frac{M_{01}}{M_{00}} \\
+    \mu_{ij} &= \sum_x \sum_y (x-\bar{x})^i(y-\bar{y})^j I(x,y)\\
+    \eta_{ij} &= \frac{\mu_{i,j}}{\mu_{00}^{(i+j)/2+1}} \\
+    h_0 &= \eta_{20}+\eta_{02} \\
+    h_1 &= (\eta_{20} - \eta_{02})^2 + 4\eta_{11}^2 \\
+    h_2 &= (\eta_{30} + \eta_{12})^2 + (\eta_{21}+\eta_{03})^2 \\
+    h_3 &= (\eta_{30}-3\eta_{12})(\eta_{30}+\eta_{12})[(\eta_{30}+\eta_{12})^2-3(2\eta_{21}+\eta_{03})^2] + (3\eta_{21}-\eta_{03})[3(\eta_{30}+\eta_{12})^2-(\eta_{21}+\eta_{03})^2] \\
+  \end{split} 
+  \label{eq:mu_moment}
+\end{align}
+
+The full definition of Hu moments include $h_5,h_6$, but here I don't use them due to
+numerical problem. 
+
+Anyway, Mu moments map a $M \times N$ image into a $R^4$ vector, usually we take $\log(.)$ to normalize them.
+
+\subsection{Integrating bootstrap}
+
+Given any feature, we can compute distance between two images using their corresponding vector given by the features. But how can we know
+they're \textit{significant}? Say we observe some a big distance and small distance, it's not determined whether the difference of first one is 
+big than second one since we don't know the volatility in the two "testing". Bootstrap provide a nice way to estimate the volatility/variance
+of those distance.
+
+Section 3.2 in \cite{wasserman2006all} defined the Bootstrap Variance Estimation:
+
+$$
+v_{boot} = \frac{1}{B} \sum_{b=1}^B \left( T^*_{n,b} - \frac{1}{B}\sum_{r=1}^B T^*_{n,r} \right)
+$$
+
+Where $T_n^*=g(X_1^*,\dots,X_n^*)$ is some statistics and samples $X_1^*,\dots,X_n^* \sim \hat{F}_n$ is sampled from given data $X_1^*,\dots,X_n^*$.
+
+We see image $x_{ij}$ as list of data $(i,j,I(i,j))$(Eq~\ref{eq:mu_moment} is converted to corresponding form), and thus we can sample them as usual,
+and let $H(x_{ij})$ be Hu moment, $D(x,y)=||H(x_{ij}) - H(y_{ij})||^2$ be "distance" between two images/patches, $x_t^*(i,j)$ be a re-sampled
+image from given image $x(i,j)$, $D(x_t^*,y_t^*)$ be distance of two re-sampled images. Thus we can define $v_{boot}^I$ as:
+
+$$
+v_{boot}^I = \frac{1}{B}\sum_{b=1}^B \left( D(x_b^*,y_b^*) - \frac{1}{B} \sum_{r=1}^B D(x_r^*,y_r^*) \right)
+$$
+
+Here $B=100$, dividing the image into $3 \times 3$ patches, the result can be shown in Fig~\ref{fig:square33}. 
+$D(x,y)$ is computed for evert neighboring pair of pixels. The number after $\pm$ is $\sqrt{v_{boot}}$. It can be show that
+the difference of first and second row is significantly big than difference of second and third row. In more dense grid,
+we may extract a rough segmentation cut from that grid.
+
+\begin{figure}[htb]
+  \centering
+  \input{tikzpictures/square33}
+  \caption{$3 \times 3$ Squares of patches of toad and their neighbor distance using Hu moment with bootstrap $\sqrt{v_{boot}}$}
+  \label{fig:square33}
+\end{figure}
 
 \section{Conclusion}
 
+In this work, noise removal problem using non-parametric regression and their relationship to methods in traditional image processing 
+is discovered and illustrated. Kernel regression is fast and effective, while local polynomial is too costly and fail to get significant
+improvement compared to kernel regression. How to use cross validation of theory, leave-one-out fashion and GCV are surveyed, it show
+a idea curve which is similar to one listed in \cite{1}. Variance estimation using smoothing get very exact result. Density estimation
+technique such as histogram and kernel density is used to build a rough segmentation, the variance of density estimation introduced by
+converting problem to regression is used to suppress fake minimum therefore may help to automatically cut point detection. Finally, 
+how to incorporate the variance information provided by bootstrap into Hu moment to evaluate their difference is shown.
 
+Though those are poor enough methods compared to modern approaches. The inter-discipline relationship is still interesting. 
 
 
 \bibliographystyle{unsrt}  
 \bibliography{references}  %%% Remove comment to use the external .bib file (using bibtex).
 %%% and comment out the ``the bibliography'' section.
+
+\appendix
+
+\section{Appendix: Part of Julia code used in experiment}
+
+%\subsection{Kernel regression}
+
+\subsection{Local polynomial}
+
+\begin{lstlisting}
+ii = [i for i=1:size(toad_noised,1),j=1:size(toad_noised,2)] 
+jj = [j for i=1:size(toad_noised,1),j=1:size(toad_noised,2)] 
+iijj = cat(reshape(ii,1,size(ii,1),size(ii,2)),
+  reshape(jj,1,size(jj,1),size(jj,2)),dims=1)
+IJ = reshape(iijj, 2, size(iijj,2)*size(iijj,3))
+
+dis = Normal()
+K = x->pdf(dis,x)
+
+mat = zeros(3, size(toad_noised,1), size(toad_noised,2))
+
+for i=1:size(toad_noised,1)
+    for j=1:size(toad_noised,2)
+        ij = [i;j]
+        Wx = K.(sum(abs.(ij .- IJ),dims=1))
+        _X = sum(ij .- IJ, dims=1)
+        X = cat(1, _X, dims=1)
+
+        l = inv((X .* Wx) * X') * (X .* Wx)
+        a = l * Y'
+
+        mat[1,i,j] = a[1,1]
+        mat[2,i,j] = a[2,1]
+        mat[3,i,j] = sum(l.^2)
+    end
+end
+\end{lstlisting}
+
+\subsection{Cross validation}
+
+\subsubsection{Monte Carlo}
+
+\begin{lstlisting}
+sigma_noise = 25
+simga_imfilter_range = 0.1:0.2:3
+T = 200
+
+sigma_loss_list = zeros(length(simga_imfilter_range))
+sigma_loss_std_list = zeros(length(simga_imfilter_range))
+
+for simga_imfilter_idx=1:length(simga_imfilter_range)
+    simga_imfilter = simga_imfilter_range[simga_imfilter_idx]
+    loss_list = zeros(T)
+    for t=1:T
+        toad_noised = clamp.(convert(Array{Float64}, 
+          toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
+        toad_filtered = imfilter(Gray.(toad_noised), 
+          Kernel.gaussian(simga_imfilter))
+        loss_list[t] = mean((toad_filtered - toad).^2)
+    end
+    sigma_loss_list[simga_imfilter_idx] = mean(loss_list)
+    sigma_loss_std_list[simga_imfilter_idx] = std(loss_list)
+end
+\end{lstlisting}
+
+\subsubsection{CV/GCV}
+
+\begin{lstlisting}
+sigma_noise = 25
+simga_imfilter_range = 0.2:0.2:3
+T = 200
+
+sigma_loss_list = zeros(length(simga_imfilter_range))
+sigma_loss_std_list = zeros(length(simga_imfilter_range))
+
+for simga_imfilter_idx=1:length(simga_imfilter_range)
+    simga_imfilter = simga_imfilter_range[simga_imfilter_idx]
+    
+    K = Kernel.gaussian(simga_imfilter)
+    K[0,0]=0
+    K = K./sum(K)
+    toad_filtered = imfilter(Gray.(toad_noised), K)
+    
+    #sigma_loss_list[simga_imfilter_idx] = mean((toad_filtered - toad).^2)
+    sigma_loss_list[simga_imfilter_idx] = mean((toad_filtered - toad_noised).^2)
+end
+
+\end{lstlisting}
+
+\subsection{Kernel density estimation}
+
+\begin{lstlisting}
+h=0.1
+dis = Normal()
+K = x->pdf(dis,x)
+diff = (reshape(x,size(x,1),1) .- reshape(X,1,size(X,1))) ./ h
+f = sum(K.(diff), dims=2) / size(X,1) / h
+\end{lstlisting}
+
+\subsection{Density estimation using kernel regression}
+
+\begin{lstlisting}
+X = vec(convert(Array{Float64}, toad_r))
+
+_size = 100
+X_seg=1:1:100
+N_seg = zeros(Int,_size)
+for Xi in X
+    #println(Int(trunc(Xi*(_size-1))))
+    N_seg[Int(trunc(Xi*(_size-1)))+1] += 1
+end
+
+Y_seg = sqrt(100/size(X)[1]) .* sqrt.(N_seg .+ 0.25);
+
+h = 1.0
+
+L_n = K.((reshape(X_seg, size(X_seg,1),1) .- 
+  reshape(X_seg, 1, size(X_seg,1)))./h)
+
+L = L_n ./ reshape(sum(L_n,dims=2),size(L_n,1),1)
+
+r = L * Y_seg
+
+\end{lstlisting}
+
+\subsection{Bootstrap and features}
+
+\begin{lstlisting}
+
+function hu_M(arr,i,j)
+  # arr: [[ii_1,jj_1,I_1],[ii_2,jj_2,I_2],...]
+  return sum(arr[:,1].^i .* arr[:,2].^j .* arr[:,3])
+end
+
+function hu_mu(arr,i,j)
+  M00 = hu_M(arr, 0, 0)
+  M10 = hu_M(arr, 1, 0)
+  M01 = hu_M(arr, 0, 1)
+  
+  x_bar = M10/M00
+  y_bar = M01/M00
+  
+  return sum((arr[:,1].-x_bar).^i .* (arr[:,2].-y_bar).^j .* arr[:,3])
+end
+
+function hu_eta(arr, i, j)
+  mu00 = hu_mu(arr, 0, 0)
+  return hu_mu(arr, i, j)/mu00^((i+j)/2+1)
+end
+
+function hu_hu(arr)
+  eta20 = hu_eta(arr, 2, 0)
+  eta02 = hu_eta(arr, 0, 2)
+  eta11 = hu_eta(arr, 1, 1)
+  eta12 = hu_eta(arr, 1, 2)
+  eta21 = hu_eta(arr, 2, 1)
+  eta30 = hu_eta(arr, 3, 0)
+  eta03 = hu_eta(arr, 0, 3)
+  
+  mu03 = hu_mu(arr, 0, 3)
+  
+  hu1 = eta20+eta02
+  hu2 = (eta20-eta02)^2 + 4*eta11^2
+  #hu3 = (eta30-3*eta12)^2 + (3*eta21-mu03)^2
+  #hu4 = (eta30+eta12)^2 + (eta21+mu03)^2
+  hu3 = (eta30-3*eta12)^2 + (3*eta21-eta03)^2
+  hu4 = (eta30+eta12)^2 + (eta21+eta03)^2
+  hu5 = (eta30-3*eta12)*(eta30+eta12)*
+    ((eta30+eta12)^2-3*(eta21+eta03)^2) + 
+    (3*eta21-eta03)*(eta21+eta03)*(3*(eta30+eta12)^2-(eta21+eta03)^2)
+  hu6 = (eta20-eta02)*((eta30+eta12)^2-(eta21+eta03)^2)+
+    4*eta11*(eta30+eta12)*(eta21+eta03)
+  hu7 = (3*eta21-eta03)*(eta30+eta12)*
+    ((eta30+eta12)^2-3*(eta21+eta03)^2)-
+    (eta30-3*eta12)*(eta21+eta03)*(3*(eta30+eta12)^2-(eta21+eta03))
+  return [hu1,hu2,hu3,hu4,hu5,hu6,hu7]
+end
+
+function get_arr(toad)
+  IJI_arr = zeros(prod(size(toad)), 3)
+
+  for i in 1:size(toad,1)
+      for j in 1:size(toad,2)
+          idx = (i-1)*size(toad,2)+j
+          IJI_arr[idx,1] = i
+          IJI_arr[idx,2] = j
+          IJI_arr[idx,3] = toad[i,j]
+      end
+  end
+  
+  IJI_arr[:,3] *= 255
+  return IJI_arr
+end
+
+function get_mat(IJI_arr; n_sample = 100, factor = 1)
+  mat = zeros(n_sample,7)
+  for t=1:n_sample
+      N = size(IJI_arr, 1)
+      n= Int(floor(N / factor))
+      p = rand(1:N, n)
+      mat[t,:] = (N/n)*hu_hu(IJI_arr[p,:])
+  end
+  return mat
+end
+
+function extract_hu4(patch)
+  return log.(get_mat(get_arr(patch), factor=1)[:,1:4])
+end
+
+
+seg = 3
+si = Int(div(size(toad,1), seg))
+sj = Int(div(size(toad,2), seg))
+f_mat = zeros(seg, seg, 100, 4)
+for i in 1:seg
+    for j in 1:seg
+        patch = toad[1+(i-1)*si:i*si,1+(j-1)*sj:j*sj]
+        f_mat[i,j,:,:] = extract_hu4(patch)
+    end
+end
+
+\end{lstlisting}
 
 
 \end{document}
