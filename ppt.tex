@@ -1,0 +1,185 @@
+\documentclass{beamer}
+
+\usepackage[utf8]{inputenc}
+%\usepackage{ctex}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\usepackage{tikz} 
+\usetikzlibrary{matrix}
+
+
+\usetheme{Madrid}
+\usecolortheme{beaver}
+
+\title{Some not that novel approach to image processing using nonparametric statistic }
+\author{Zhuo Yueyi}
+\institute[NUST]{Department of Computer Science and Engineering}
+\date{2019}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+
+    \frametitle{Data format of image}
+
+    Colored(RGB) image can be seen as a 3 variables function  $f(i,j,c)$, where $i,j$ denote the location of image, $c$ denotes
+    channel(red, green, blue). The function can be encoded by three matrixes as shown in Fig~\ref{fig:toad_rgb}.
+
+    \begin{figure}[htb]
+    \centering
+    \scalebox{.75}{\input{tikzpictures/toad_rgb}}
+    \caption{Representation: Image as three matrix}
+    \label{fig:toad_rgb}
+    \end{figure}
+
+
+\end{frame}
+
+\begin{frame}
+
+    Since the colored image introduce extra complexity, in most of this paper, the gray image is used for simplicity.
+    Instead of three matrices, the gray image is represented by a single matrix which is given by:
+    
+    \begin{equation}
+      f_{gray}(i,j) = 0.21 f_{rgb}(i,j,1) + 0.72 f_{rgb}(i,j,2) + 0.07 f_{rgb}(i,j,3)
+      \label{eq:rgb_to_gray}
+    \end{equation}
+    
+    Sometimes "flattening" a matrix to a long vector is a useful viewpoint. There're two order to flatten a matrix,
+    row-major and column-major. The row-major is used in Python(Numpy) and the column-major is used by R,Julia and MatLab.
+    Row-major order of Python is illustrated as Fig~\ref{fig:flatten_matrix}.
+    
+    \begin{figure}[htb]
+      \centering
+      \input{tikzpictures/flatten_matrix}
+      \caption{Flatten a matrix by row}
+      \label{fig:flatten_matrix}
+    \end{figure}
+    
+\end{frame}
+
+\begin{frame}
+    As a application we can model the vector as i.i.d sample of some distribution using simpler symbol, the most 
+    common practice is to represent them as a histogram, see Fig~\ref{fig:map_gray_to_hist}. 
+    %For more detail, refer to Section~\ref{segmentation}.
+
+    \begin{figure}[htb]
+    \centering
+    \input{tikzpictures/map_gray_to_hist}
+    \caption{Mapping from gray image to histogram}
+    \label{fig:map_gray_to_hist}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Inverse problem in image processing}
+    As presented in \cite{dong2015image}, we usually regard image as a result of combination of some "observe"
+    function and noise. In its simplest form, we can write:
+    
+    \begin{equation}
+    \mathbf{f} = \mathbf{A} \mathbf{x} + \mathbf{\eta}
+    \label{eq:inverse_problem}
+    \end{equation}
+    
+    where $\mathbf{f}$ denote a (gray) image, $\mathbf{A}$ is a linear operation(usually a convolution)
+    \footnote{This equation can be written as a verbose conventional matrix equation, 
+    see document of MatLab function \bf{im2col}}, 
+    $\mathbf{x}$ is "true" image, $\mathbf{\eta}$ is noise term.
+    
+
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Smoothing: nonparametric statistic and image processing}
+
+    There exists a fully equivalence which can be shown on smoothing problem.
+
+    \cite{wasserman2006all} state regression for pairs $((x_1,Y_1),\dots,(x_n,Y_n))$ like:
+    
+    $$
+    Y_i = r(x_i) + \epsilon_i
+    $$
+    
+    Replacing $x_i$ with $x_{ij}=(i,j)$ ($i,j$ denote coordinates of corresponding pixel on image), compared to Eq~\ref{eq:inverse_problem},
+    so the $r(x_{i,j})=r(i,j)$ denote the complex true image function. $\epsilon_i \to \epsilon_{i,j} \sim N(0,\sigma)$ is i.i.d white noise.
+    
+    
+
+\end{frame}
+
+\begin{frame}
+    It's obvious that we can not specify a simple parametric model on it (For some possible parametric image model,
+    see Fig~\ref{fig:parametric_model} ) so that the noise derived from underestimated model will cause misunderstanding. 
+    Thus we must employ a nonparametric fashion though computer scientist may not aware it explicitly.
+    
+    \begin{figure}[htb]
+      \centering
+      \begin{subfigure}[b]{0.24\linewidth}
+        \includegraphics[width=\linewidth]{images/parametric_model_1.png}
+        \caption{$y_{ij} = i+j$}
+      \end{subfigure}
+      \begin{subfigure}[b]{0.24\linewidth}
+        \includegraphics[width=\linewidth]{images/parametric_model_2.png}
+        \caption{$y_{ij} = \log(1+i)+\log(1+j)$}
+      \end{subfigure}
+      \begin{subfigure}[b]{0.24\linewidth}
+        \includegraphics[width=\linewidth]{images/parametric_model_3.png}
+        \caption{$y_{ij} = \sin(i)+\sin(j)$}
+      \end{subfigure}
+      \begin{subfigure}[b]{0.24\linewidth}
+        \includegraphics[width=\linewidth]{images/parametric_model_4.png}
+        \caption{$y_{ij} = \sin(0.1i)+\sin(0.1j)$}
+      \end{subfigure}
+      \caption{Simple parametric model can't capture big picture of image.}
+      \label{fig:parametric_model}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+
+    \frametitle{Kernel regression}
+
+    As stated in \cite{solomon2011fundamentals}, a mean filtering, as simplest filter technology, give same weight to neibor pixel to smooth the
+    noised to remove noise(try to find true $r(i,j)$ ). Concretely, here's a instance of $3 \times 3$ filtering:
+    
+    \begin{equation}
+    g(i,j) = \frac{1}{9} \sum_{di=-1}^1 \sum_{dj=-1}^1 f(i+di,j+dj)
+    \label{eq:mean_filter}
+    \end{equation}
+    
+    If we set kernel function as:
+    
+    $$ 
+    K(x_{i,j},y_{i,j}) =  
+    \begin{cases}
+      1, & \text{if $ |i_x - i_y| \le 1$ and $|j_x - j_y| \le 1$} \\
+      0, & \text{otherwise}
+    \end{cases}
+    $$
+    
+    Which is a nature two-variables extension from box-car kernel introduced by \cite{wasserman2006all}.
+    Then the kernel regression given by:
+    
+    $$
+    \hat{r}(x_{i,j}) = \frac{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t}) Y_{s,t}}{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t})}
+    $$
+    
+    is equivalence to Eq~\ref{eq:mean_filter}. A example can be shown in Fig~\ref{fig:effect_noise_removal}. 
+    The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression. 
+    We can see that $h=5$(mean kernel = $11 \times 11 $) lead to over-smooth $\hat{r}$, $h=1$ seems under-smoothed,
+    while the result of median seems fine.
+    
+\end{frame}
+
+\end{document}
