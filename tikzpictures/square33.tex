@@ -1,0 +1,35 @@
+\begin{tikzpicture}
+    \node[inner sep=0pt] (toad_1_1) at (0,0)
+    {\includegraphics[width=.3\textwidth]{images/toad_1_1.png}};
+    \node[inner sep=0pt] (toad_2_1) at ([shift={(0.0, -1.5)}]toad_1_1.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_2_1.png}};
+    \node[inner sep=0pt] (toad_3_1) at ([shift={(0.0, -1.5)}]toad_2_1.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_3_1.png}};
+    \node[inner sep=0pt] (toad_1_2) at ([shift={(2.5, 0.0)}]toad_1_1.east)
+    {\includegraphics[width=.3\textwidth]{images/toad_1_2.png}};
+    \node[inner sep=0pt] (toad_2_2) at ([shift={(0.0, -1.5)}]toad_1_2.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_2_2.png}};
+    \node[inner sep=0pt] (toad_3_2) at ([shift={(0.0, -1.5)}]toad_2_2.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_3_2.png}};
+    \node[inner sep=0pt] (toad_1_3) at ([shift={(2.5, 0.0)}]toad_1_2.east)
+    {\includegraphics[width=.3\textwidth]{images/toad_1_3.png}};
+    \node[inner sep=0pt] (toad_2_3) at ([shift={(0.0, -1.5)}]toad_1_3.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_2_3.png}};
+    \node[inner sep=0pt] (toad_3_3) at ([shift={(0.0, -1.5)}]toad_2_3.south)
+    {\includegraphics[width=.3\textwidth]{images/toad_3_3.png}};
+
+    \draw [-] (toad_1_1.east) -- (toad_1_2.west) node [midway, below] {$ 24.988 \pm 22.369 $};
+    \draw [-] (toad_1_1.south) -- (toad_2_1.north) node [midway, left] {$ 117.053 \pm 42.209 $};
+    \draw [-] (toad_1_2.east) -- (toad_1_3.west) node [midway, below] {$ 16.502 \pm 11.726 $};
+    \draw [-] (toad_1_2.south) -- (toad_2_2.north) node [midway, left] {$ 14.012 \pm 3.556 $};
+    \draw [-] (toad_1_3.south) -- (toad_2_3.north) node [midway, left] {$ 44.610 \pm 17.570 $};
+    \draw [-] (toad_2_1.east) -- (toad_2_2.west) node [midway, below] {$ 8.931 \pm 3.148 $};
+    \draw [-] (toad_2_1.south) -- (toad_3_1.north) node [midway, left] {$ 2.160 \pm 0.927 $};
+    \draw [-] (toad_2_2.east) -- (toad_2_3.west) node [midway, below] {$ 3.937 \pm 2.340 $};
+    \draw [-] (toad_2_2.south) -- (toad_3_2.north) node [midway, left] {$ 5.036 \pm 7.379 $};
+    \draw [-] (toad_2_3.south) -- (toad_3_3.north) node [midway, left] {$ 1.577 \pm 1.423 $};
+    \draw [-] (toad_3_1.east) -- (toad_3_2.west) node [midway, below] {$ 10.723 \pm 10.646 $};
+    \draw [-] (toad_3_2.east) -- (toad_3_3.west) node [midway, below] {$ 6.596 \pm 7.907 $};
+
+    %\draw[help lines] (0,0) grid (10,-10);
+\end{tikzpicture}
