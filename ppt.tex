@@ -1,3 +1,4 @@
+
 \documentclass{beamer}
 
 \usepackage[utf8]{inputenc}
@@ -13,11 +14,13 @@
 \usepackage{tikz} 
 \usetikzlibrary{matrix}
 
+\setbeamertemplate{caption}[numbered]
+
 
 \usetheme{Madrid}
 \usecolortheme{beaver}
 
-\title{Some not that novel approach to image processing using nonparametric statistic }
+\title[Nonparametric statistic and image processing]{Some not that novel approach to image processing using nonparametric statistic }
 \author{Zhuo Yueyi}
 \institute[NUST]{Department of Computer Science and Engineering}
 \date{2019}
@@ -169,17 +172,550 @@
     $$
     
     Which is a nature two-variables extension from box-car kernel introduced by \cite{wasserman2006all}.
-    Then the kernel regression given by:
-    
-    $$
-    \hat{r}(x_{i,j}) = \frac{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t}) Y_{s,t}}{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t})}
-    $$
-    
-    is equivalence to Eq~\ref{eq:mean_filter}. A example can be shown in Fig~\ref{fig:effect_noise_removal}. 
-    The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression. 
-    We can see that $h=5$(mean kernel = $11 \times 11 $) lead to over-smooth $\hat{r}$, $h=1$ seems under-smoothed,
-    while the result of median seems fine.
+
     
 \end{frame}
+
+\begin{frame}
+  Then the kernel regression given by:
+    
+  $$
+  \hat{r}(x_{i,j}) = \frac{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t}) Y_{s,t}}{\sum_{s} \sum_{t} K(x_{i,j},x_{s,t})}
+  $$
+  
+  is equivalence to Eq~\ref{eq:mean_filter}. A example can be shown in Fig~\ref{fig:effect_noise_removal}. 
+  The kernel size(here it's $3$) is directly correspond to bandwidth $h$ used in kernel regression. 
+  We can see that $h=5$(mean kernel = $11 \times 11 $) lead to over-smooth $\hat{r}$, $h=1$ seems under-smoothed,
+  while the result of median seems fine.
+
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/noise_removal_1.png}
+      \caption{Noised toad}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/noise_removal_2.png}
+      \caption{Kernel regression(h=1)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/noise_removal_3.png}
+      \caption{Kernel regression(h=5)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/noise_removal_4.png}
+      \caption{Median regression(h=3)}
+    \end{subfigure}
+    \caption{$\hat{r}(x_{i,j})$}
+    \label{fig:effect_noise_removal}
+  \end{figure}  
+
+\end{frame}
+
+\begin{frame}
+  Mean filtering is usually weaker than median filtering, a example is shown in Fig~\ref{fig:effect_noise_removal}. 
+Though median filtering is also a linear smoother: 
+
+$$
+\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}$$
+
+Tts hat-"matrix"(here is 4d tensor) can be represented as: 
+
+$$ 
+l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median}) 
+$$
+
+Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neighborhood of given pixel $(i,j)$.
+
+But obviously it can not be included by kernel regression, say, 
+we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
+
+Following textbook \cite{wasserman2006all}, we can try to find different improvement other than mean-filter 
+(i.e. gaussian kernel regression(filtering) using gaussian kernel) rank-filter, or, 
+for example, local polynomial regression. 
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Local Polynomial Regression}
+
+  Basically, polynomial regression fit a "delta" model $f_{i,j}(di,dj)$ for every points $(i,j)$, and use $f(0,0)$
+  as estimation of $\hat{r}(x_{i,j})$. Especially, the linear formulation with kernel weighting is most 
+  interesting considering higher order may causing numerical problem.
+  
+  The vanilla equation:
+  
+  $$
+  \mathbf{l}(x) = e_1^T (X_x^T W_x X_x)^{-1} X_x^T W_x
+  $$
+  
+  may lead too large matrix $W_x$ ($23520 \times 23520$), so the broadcast trick is used to represent the matrix as 
+  $23520$ vector. However, fit a model $23520$ times using slightly different parameters is inevitable. 
+  
+\end{frame}
+
+\begin{frame}
+  The result seems nice more than results given by kernel regression and median filter, 
+  as shown in Fig~\ref{fig:local_poly} %\footnote{The above related code is written in Python and following related code is written in Julia}.  
+  The "true" means that the model is applied on true image instead of noised image,
+  we can see the detail is kept finely compared to other methods which may over-smooth even in "true" image.
+  The right one show $h=1$ result of smoothing the noised image, we can see the result may not be better than median regression especially considering
+  it costly computation time. 
+
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/poly_nr.png}
+      \caption{Local Poly Reg Cons(true)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/poly_nr_lin.png}
+      \caption{Local Poly Reg Lin(true)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/poly_nr_true.png}
+      \caption{Local Poly Reg Cons(h=1)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/poly_nr_lin_true.png}
+      \caption{Local Poly Reg Lin(h=1)}
+    \end{subfigure}
+    \caption{Local polynomial regression results}
+    \label{fig:local_poly}
+  \end{figure}
+
+\end{frame}
+
+\begin{frame}
+  And it can also provide variance information. The second sub-fig show the value of linear term, which show the linear
+  "trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
+  in image processing, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
+  change matched by different methods will give consistent response as seen in those figures.
+  
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/edge_1.png}
+      \caption{LPR linear term coef}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/edge_2.png}
+      \caption{LPR linear term abs coef}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/edge_3.png}
+      \caption{LoG($\sigma=1$)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/edge_4.png}
+      \caption{Sobel}
+    \end{subfigure}
+    \caption{How linear term in LPR can be explained as edge detection}
+    \label{fig:edge}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Cross validation for smoothing}
+
+  Since here we have actually the true function $r(i,j)$, the vanilla risk:
+
+  $$
+  R(h) = E \left( \frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2 \right)
+  $$
+  
+  for given $h,\sigma$ (the randomness of $\hat{r}_n(x_i)$ is subject to $\sigma$ parameter of noise term $\epsilon$) 
+  can be approximated by Monte Calor simulation:
+  
+  $$
+  R(h) \approx \frac{1}{T} \sum_{t=1}^T \frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2
+  $$
+  
+  The $T$ is number of simulation, here $T=200$ is used.
+
+\end{frame}
+
+\begin{frame}
+  See Fig~\ref{fig:crossvalidation_mc} for result of simulation with mean with $3\sigma$ ribbon. 
+  It's obvious that the optimal may be located in $h \approx 0.75$ .
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.49\linewidth}
+      \includegraphics[width=\linewidth]{images/crossvalidation1.png}
+      \caption{Monte Carlo $R(h)$ for the true image}
+      \label{fig:crossvalidation_mc}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\linewidth}
+      \includegraphics[width=\linewidth]{images/crossvalidation2.png}
+      \caption{CV for a given noised image}
+      \label{fig:crossvalidation_cv}
+    \end{subfigure}
+    \caption{Cross Validation}
+    \label{fig:crossvalidation}
+  \end{figure}
+
+\end{frame}
+
+\begin{frame}
+  Of course usually we don't have true function $r(x_i)$, so we want a sample-based method, 
+  that is the leave-one-out cross validation score which can be employed to show a guideline to choose optimal bandwidth $h$
+  when true function is not observed.
+  
+  Fortunately, the LOOCV is equivalence to remove the center of the kernel used in filtering, so that we can simplify this to 
+  convolution which can be effectively computed by software.
+  
+  The vanilla equation:
+  
+  $$
+  CV = \hat{R}(h)=\frac{1}{n}\sum_{i=1}^n (Y_i-\hat{r}_{-i}(x_i))^2
+  $$
+  
+  is equivalence to following change of kernel of convolution in gaussian kernel regression, see Fig~\ref{fig:gaussian_kernel}. 
+  The result can seen in Fig~\ref{fig:crossvalidation_cv}.  
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generalized cross validation}
+  The Equation(5.36) in \cite{wasserman2006all} define the generalized cross validation:
+
+  $$
+  GCV = \frac{1}{n}\sum_{i=1}^n \left(\frac{Y_i-\hat{r}_n(x_i)}{1-\nu/n}\right)^2
+  $$
+  
+  Where $\nu = \sum_{i=1}^n \mathbf{L}_{ii}$. Since the kernel used in gaussian kernel regression is homogeneous(i.e. it always take $0.1621$
+  shown in \ref{fig:gaussian_kernel} when $h=1$.). Therefore $L_{ii} = \nu/n$, thus the GCV take same value as CV take. 
+  
+  \begin{figure}[htb]
+    \centering
+    \scalebox{.6}{\input{tikzpictures/gaussian_kernel}}
+    \caption{Gaussian kernel used in Leave-one-out cross validation}
+    \label{fig:gaussian_kernel}
+  \end{figure}
+  
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Variance estimation introduced by smoothing}
+
+  In fact, the image is polluted by some i.i.d noise terms $\epsilon_i \sim N(0,\sigma^2)$ where hold a constant $\sigma$ for every index $i$.
+  so that, following \cite{wasserman2006all} Theorem 5.85, we can estimate it by following equation:
+  
+  $$
+  \hat{\sigma}^2=\frac{\sum_{i=1}^n (Y_i-\hat{r}(x+i))^2}{n-2\nu+\tilde{\nu}}
+  $$
+  
+  where
+  
+  $$
+  \nu = \mathrm{tr}(\mathbf{L}), \quad 
+  \tilde{\nu}=\mathrm{tr}(\mathbf{L}^T\mathbf{L})=\sum_{i=1}^n||l(x_i)||^2
+  $$  
+
+\end{frame}
+
+\begin{frame}
+  In our setting, let $K$ denote the kernel matrix
+  \footnote{The $K$ can be encoded as a sparse 23520 dimension vector $l_i$ which have 25 non-zero value while all other value are zero to match
+  the notation used in the textbook, but those tedious transform are omitted for briefly.}
+  such as the one shown in Fig~\ref{fig:gaussian_kernel} leftmost.
+  $n = 168 \times 140 = 23520$,$\nu = n \times s \times K[0,0]$,
+  $\tilde{\nu} = \sum_{i=-2}^2\sum_{j=-2}^2 K[i,j]^2$. 
+  Set $\sigma=50$(In Julia it's $\sigma=0.098$), 
+  the simulation distribution of $\hat{\sigma}^2$ can be seen in Fig~\ref{fig:std_est}. 
+  The interesting thing is that all of them fail to cover true point $0.098$, when $h$ become larger,
+  the bias is even worsen, though the range of $(h=0.2)$, $[0.1000,0.1024]$ almost capture it.
+  It's not that surprise considering the consistency condition of estimator, 
+  $\nu=o(n),\tilde{\nu}=o(n)$ which is not satisfied in this case.
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/std_est_1.png}
+      \caption{Dist of $\hat{\sigma}^2$ ($h=0.2$)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/std_est_2.png}
+      \caption{Dist of $\hat{\sigma}^2$ ($h=0.5$)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/std_est_3.png}
+      \caption{Dist of $\hat{\sigma}^2$ ($h=1.0$)}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/std_est_4.png}
+      \caption{Dist of $\hat{\sigma}^2$ ($h=2.0$)}
+    \end{subfigure}
+    \caption{simulation distribution of $\hat{\sigma}^2$(samples = 200)}
+    \label{fig:std_est}
+  \end{figure}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Density estimation and threshold segmentation}
+
+  Due to the property of linear combination of Eq~\ref{eq:rgb_to_gray}. Splitting the image from RGB to three channel histogram is more useful
+  compared to using gray histogram directly. For example, the result of toad is shown in Fig~\ref{fig:hist_g_rgb}.
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/hist_gray.png}
+      \caption{Hist of gray}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/hist_r.png}
+      \caption{Hist of red}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/hist_g.png}
+      \caption{Hist of green}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/hist_b.png}
+      \caption{Hist of blue}
+    \end{subfigure}
+    \caption{Splitting three channel histogram}
+    \label{fig:hist_g_rgb}
+  \end{figure}  
+
+\end{frame}
+
+\begin{frame}
+  Histogram is subject to bins, we want to look for a smoothed version of histogram 
+  that can either corporate "bandwidth" information and keep its continues property(resolution). 
+  A choice is Kernel Density Estimation(KDE). Eq(6.26) in \cite{wasserman2006all} show:
+  
+  $$
+  \hat{f} = \frac{1}{n} \sum_{i=1}^n \frac{1}{h} K\left( \frac{x-X_i}{h} \right)
+  $$
+  
+  I choose Gaussian Kernel, $K(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}$ with $h=0.3$, 
+  the result is shown in Fig~\ref{fig:kde}.
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/kde_r.png}
+      \caption{KDE of red}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/kde_g.png}
+      \caption{KDE of green}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/kde_b.png}
+      \caption{KDE of blue}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/kde_code.png}
+      \caption{Encoding of KDE}
+    \end{subfigure}
+    \caption{KDE and threshold encoding}
+    \label{fig:kde}
+  \end{figure}  
+
+  Some vertical lines are drawn to indicate "components" behind the image. 
+
+\end{frame}
+
+\begin{frame}
+  
+  We can assume that some region of the image space is segmented firstly (latent variables) 
+  and draw centering color and correlated noise(i.e. MRF) on it. 
+  To infer the latent class label in image region,
+  we can 
+  %use clustering such as k-means with a distance measure such as distance of pixel and color. 
+  %But here, one observe the KDE of image,
+  manually or automatically choose some cutoff points
+  %(Here points is chosen manually, 
+  %but taking minimum value of KDE numerically can be employed.). 
+  So in principle we can get $4\times 3\times 3=36$ components, 
+  but since RGB is correlated in intensity(say, more red value imply more green and blue value as well.), 
+  the number of valid components is only $18$ as shown in Fig~\ref{fig:kde}.
+  Those components can be split into a image, as shown in Fig~\ref{fig:splitting}. 
+  %The processing result of it is called segmentation, a classic field in image processing. 
+  %Anyway the method using KDE is not that useful compared to modern method using CNN \cite{long2015fully} or 
+  %even early method using MRF\cite{panjwani1995markov}. 
+  
+  \begin{figure}[htb]
+    \centering
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/toad_split.png}
+      \caption{Weird toad splitting}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/toad_split_air.png}
+      \caption{Splitting of air}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/toad_split_center.png}
+      \caption{Splitting of back}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\linewidth}
+      \includegraphics[width=\linewidth]{images/toad_split_water.png}
+      \caption{Splitting of part of water}
+    \end{subfigure}
+    \caption{KDE and segmentation}
+    \label{fig:splitting}
+  \end{figure}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Converting Density Estimation into Regression to suppress minimum value made by noise}
+
+  Automatically detecting cutoff points through searching on local minimum is subject to some factors. 
+If there is a minimum point, but with very tiny curvature, is it a true minimum point or made by random noise? 
+It may occur more usually when $h$ is not "enough".
+For example, Fig~\ref{fig:DS_REG} show the KDE of red and blue channels when $h=0.2$ compared to previous $h=0.3$.
+We can impose a confidence interval to it to determine. 
+It require technique in \cite{wasserman2006all} section 6.6.
+
+\begin{figure}[htb]
+  \centering
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/fake_min_r.png}
+    \caption{KDE of red ($h=0.2$)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/fake_min_b.png}
+    \caption{KDE of blue ($h=0.2$)}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/kde_reg_r.png}
+    \caption{Red DS by KR($h=1.0$) with 3$\sigma$ range}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.24\linewidth}
+    \includegraphics[width=\linewidth]{images/kde_reg_b.png}
+    \caption{Blue DS by KR($h=1.0$) with 3$\sigma$ range}
+  \end{subfigure}
+  \caption{Some possible fake minimum points and suppressing}
+  \label{fig:DS_REG}
+\end{figure}
+
+
+\end{frame}
+
+\begin{frame}
+
+  Firstly divide the interval [0,1] (Julia treat intensity as number in $[0,1]$ exactly) into $k=100$ bins, 
+  which center is denoted by $X_1,\dots,X_k$. Let $N_j$ be the number of observations in bin $j$. Define
+  
+  $$
+  Y_j = \sqrt{\frac{k}{n}} \times \sqrt{N_j+\frac{1}{4}}
+  $$
+  
+  So now we have a standard regression problem for data $(X_j,Y_j),j=1,\dots,k$. The confidence band is given by:
+
+  $$
+  I(x) = (\hat{r}_n(x)-c\hat{\sigma}||l(x)||, \hat{r}_n(x)+c\hat{\sigma}||l(x)||)
+  $$
+
+  Gaussian kernel regression with $h=1$ is used to solve it, the result can shown in Fig~\ref{fig:DS_REG}.
+  The wide confidence band around those suspicion minimum points indicate that they're fake ones.
+   
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bootstrap and confidence of feature detecting}
+
+  Invariant feature: Hu moments:
+
+  A image or patch of image can be summarized by some statistic, such as intensity histogram shown above. If we impose some constraints
+  on those statistic, for example, they should be invariant to translate, scale, rotation transform. The valid choose of those statistic
+  seems narrow, a excellent result is obtained by \cite{hu1962visual}, called Hu moments, which is defined by:
+  
+  \begin{align}
+    \begin{split}
+      M_{ij} &= \sum_x \sum_y x^i y^i I(x,y) \\
+      \bar{x} &= \frac{M_{10}}{M_{00}} \\
+      \bar{y} &= \frac{M_{01}}{M_{00}} \\
+    \end{split} 
+    \label{eq:mu_moment}
+  \end{align}
+\end{frame}
+
+\begin{frame}
+
+  \begin{align}
+    \begin{split}
+      \mu_{ij} &= \sum_x \sum_y (x-\bar{x})^i(y-\bar{y})^j I(x,y)\\
+      \eta_{ij} &= \frac{\mu_{i,j}}{\mu_{00}^{(i+j)/2+1}} \\
+      h_0 &= \eta_{20}+\eta_{02} \\
+      h_1 &= (\eta_{20} - \eta_{02})^2 + 4\eta_{11}^2 \\
+      h_2 &= (\eta_{30} + \eta_{12})^2 + (\eta_{21}+\eta_{03})^2 \\
+      h_3 &= (\eta_{30}-3\eta_{12})(\eta_{30}+\eta_{12})[(\eta_{30}+\eta_{12})^2-3(2\eta_{21}+\eta_{03})^2] \\
+          &+ (3\eta_{21}-\eta_{03})[3(\eta_{30}+\eta_{12})^2-(\eta_{21}+\eta_{03})^2] \\
+    \end{split} 
+    \label{eq:mu_moment}
+  \end{align}
+  
+  The full definition of Hu moments include $h_5,h_6$, but here I don't use them due to
+  numerical problem. 
+  
+  Anyway, Mu moments map a $M \times N$ image into a $R^4$ vector, usually we take $\log(.)$ to normalize them.
+    
+\end{frame}
+
+\begin{frame}
+  \frametitle{Integrating bootstrap}
+
+  Given any feature, we can compute distance between two images using their corresponding vector given by the features. But how can we know
+they're \textit{significant}? Say we observe a big distance and a small distance, it's not determined whether the difference of first one is 
+big than second one since we don't know the volatility in the two "testing". Bootstrap provide a nice way to estimate the volatility/variance
+of those distance.
+
+Section 3.2 in \cite{wasserman2006all} defined the Bootstrap Variance Estimation:
+
+$$
+v_{boot} = \frac{1}{B} \sum_{b=1}^B \left( T^*_{n,b} - \frac{1}{B}\sum_{r=1}^B T^*_{n,r} \right)^2
+$$
+
+Where $T_n^*=g(X_1^*,\dots,X_n^*)$ is some statistics and samples $X_1^*,\dots,X_n^* \sim \hat{F}_n$ is sampled from given data $X_1^*,\dots,X_n^*$.
+
+\end{frame}
+
+\begin{frame}
+  We see image $x_{ij}$ as list of data $(i,j,I(i,j))$(Eq~\ref{eq:mu_moment} is converted to corresponding form), and thus we can sample them as usual,
+  and let $H(x_{ij})$ be Hu moment, $D(x,y)=||H(x_{ij}) - H(y_{ij})||^2$ be "distance" between two images/patches, $x_t^*(i,j)$ be a re-sampled
+  image data(now, generally it can not construct a valid image) from given image $x(i,j)$, $D(x_t^*,y_t^*)$ be distance of two re-sampled images. Thus we can define $v_{boot}^I$ as:
+  
+  $$
+  v_{boot}^I = \frac{1}{B}\sum_{b=1}^B \left( D(x_b^*,y_b^*) - \frac{1}{B} \sum_{r=1}^B D(x_r^*,y_r^*) \right)^2
+  $$
+  
+  Here $B=100$, dividing the image into $3 \times 3$ patches, the result can be shown in Fig~\ref{fig:square33}. 
+  $D(x,y)$ is computed for every neighboring pair of pixels. The number after $\pm$ is $\sqrt{v_{boot}}$. It can be show that
+  the difference of first and second row is significantly big than difference of second and third row. In more dense grid,
+  we may extract a rough segmentation cut from that grid.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Toad $+ 3 \times 3$ s}
+
+  \begin{figure}[htb]
+    \centering
+    \scalebox{.75}{\input{tikzpictures/square33}}
+    \caption{$3 \times 3$ Squares of patches of toad and their neighbor distance using Hu moment with bootstrap $\sqrt{v_{boot}}$}
+    \label{fig:square33}
+  \end{figure}
+  
+
+\end{frame}
+
+%\bibliographystyle{unsrt}
+\bibliographystyle{amsalpha}  
+\bibliography{references}  %%% Remove comment to use the external .bib file (using bibtex).
+
 
 \end{document}
