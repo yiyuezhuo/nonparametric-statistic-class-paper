@@ -301,11 +301,6 @@ we can see the detail is kept finely compared to other methods which may over-sm
 The right one show $h=1$ result of smoothing the noised image, we can see the result may not be better than median regression especially considering
 it costly computation time. 
 
-And it can also provide variance information. The second sub-fig show the value of linear, it show the linear
-"trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
-in image processing, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
-change matched by different methods will give consistent response as seen in those figures.
-
 \begin{figure}[htb]
   \centering
   \begin{subfigure}[b]{0.24\linewidth}
@@ -327,6 +322,13 @@ change matched by different methods will give consistent response as seen in tho
   \caption{Local polynomial regression results}
   \label{fig:local_poly}
 \end{figure}
+
+
+And it can also provide variance information. The second sub-fig show the value of linear term, which show the linear
+"trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
+in image processing, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
+change matched by different methods will give consistent response as seen in those figures.
+
 
 \begin{figure}[htb]
   \centering
@@ -505,8 +507,8 @@ compared to using gray histogram directly. For example, the result of toad is sh
   \label{fig:hist_g_rgb}
 \end{figure}
 
-Histogram is subject to bins, we want to look for a smoothed version of histogram t
-hat can either corporate "bandwidth" information and keep its continues property(resolution). 
+Histogram is subject to bins, we want to look for a smoothed version of histogram 
+that can either corporate "bandwidth" information and keep its continues property(resolution). 
 A choice is Kernel Density Estimation(KDE). Eq(6.26) in \cite{wasserman2006all} show:
 
 $$
@@ -548,8 +550,8 @@ manually or automatically choose some cutoff points(Here points is chosen manual
 but taking minimum value of KDE numerically can be employed.). 
 So in principle we can get $4\times 3\times 3=36$ components, 
 but since RGB is correlated in intensity(say, more red value imply more green and blue value as well.), 
-the number of valid components is only $18$ as shown in \ref{fig:kde}.
-Those components can be split into a image, as shown in \ref{fig:splitting}. 
+the number of valid components is only $18$ as shown in Fig~\ref{fig:kde}.
+Those components can be split into a image, as shown in Fig~\ref{fig:splitting}. 
 The processing result of it is called segmentation, a classic field in image processing. 
 Anyway the method using KDE is not that useful compared to modern method using CNN \cite{long2015fully} or 
 even early method using MRF\cite{panjwani1995markov}. 
@@ -592,7 +594,11 @@ $$
 Y_j = \sqrt{\frac{k}{n}} \times \sqrt{N_j+\frac{1}{4}}
 $$
 
-So now we have a standard regression problem for data $(X_j,Y_j),j=1,\dots,k$.
+So now we have a standard regression problem for data $(X_j,Y_j),j=1,\dots,k$. The confidence band is given by:
+
+$$
+I(x) = (\hat{r}_n(x)-c\hat{\sigma}||l(x)||, \hat{r}_n(x)+c\hat{\sigma}||l(x)||)
+$$
 Gaussian kernel regression with $h=1$ is used to solve it, the result can shown in Fig~\ref{fig:DS_REG}.
 The wide confidence band around those suspicion minimum points indicate that they're fake ones.
  
