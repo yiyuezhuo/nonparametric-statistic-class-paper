@@ -1,0 +1,76 @@
+
+\documentclass[a4paper,12pt]{article}
+
+%\usepackage[utf8]{inputenc}
+\usepackage[UTF8]{ctex}
+%\LoadClass[a4paper,12pt]{ctexart}
+
+\usepackage[tmargin=1in,bmargin=1in,lmargin=1.25in,rmargin=1.25in]{geometry}
+% https://tex.stackexchange.com/questions/35892/latex-optimal-settings-for-ms-word-like-document
+
+\usepackage{times}
+
+
+\usepackage{framed}
+\usepackage{lipsum}
+\usepackage{tikz} 
+
+% https://blog.csdn.net/xiazdong/article/details/8892070
+\newcommand{\yihao}{\fontsize{26pt}{36pt}\selectfont} 
+\newcommand{\xiaoyi}{\fontsize{24pt}{36pt}\selectfont} 
+\newcommand{\xiaosan}{\fontsize{15pt}{22.5pt}\selectfont}
+
+%\newcommand{\li}{\CJKfamily{li}}
+
+% https://github.com/yiyuezhuo/sicnu-thesis/blob/master/sicnuthesis.cls
+%\newcommand\coveritem[1]{\underline{ \makebox[10.46em]{ \xiaosan #1 } }}
+\newcommand\coveritem[2]{ \vspace{0.5cm} \hspace*{0.1\linewidth} \textbf{\xiaosan #1}   \underline{ \bf \makebox[15.46em]{ \xiaosan #2 } }}
+
+
+
+\begin{document}
+
+\begin{center}
+
+\textbf{\yihao Nanjing University of Science and Technology}
+
+
+%\textbf{\xiaoyi {\ttfamily Course Examination Paper}}
+\xiaoyi { Course Examination Paper}
+\vspace{0.75cm}
+
+\end{center}
+
+%\textbf{Course Title： }%\emph{Stochastic Mathematics }}
+\coveritem{Course Title：}{ \small Contemporary Nonparametric Statistics}%\emph{Stochastic Mathematics }}
+
+\coveritem{Paper Title：}{ \scriptsize On approach to image processing using nonparametric statistic }
+
+\coveritem{Name：}{卓越羿}
+
+\coveritem{Student ID：}{118106010639}
+
+\coveritem{Score：}{}
+
+\vspace{1.6cm}
+
+\begin{tikzpicture}
+    \begin{scope}
+      \node (0,0) {\fbox{\parbox[c]{\linewidth}{%\centering%
+      \hspace{0.4cm}
+
+      Reviews of Teacher： 
+        \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ % 10 
+        \hspace*{0.5\linewidth} {\xiaosan Signature：}\underline{ \makebox[7.46em]{  } }
+        
+        \vspace{0.4cm}
+
+        \hspace*{0.5\linewidth} {\xiaosan Date:}
+        
+        \vspace{0.4cm}
+      }}};
+    \end{scope}
+\end{tikzpicture}    
+
+
+\end{document}
