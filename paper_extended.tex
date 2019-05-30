@@ -79,6 +79,9 @@
 }
 
 \begin{document}
+\tableofcontents
+\newpage
+
 \maketitle
 
 \begin{abstract}
@@ -458,19 +461,19 @@ $\nu=o(n),\tilde{\nu}=o(n)$ which is not satisfied in this case.
 
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_1.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_2.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=0.5$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_3.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=1.0$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_4.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=2.0$)}
   \end{subfigure}
@@ -487,19 +490,19 @@ compared to using gray histogram directly. For example, the result of toad is sh
 
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/hist_gray.png}
     \caption{Hist of gray}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/hist_r.png}
     \caption{Hist of red}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/hist_g.png}
     \caption{Hist of green}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/hist_b.png}
     \caption{Hist of blue}
   \end{subfigure}
@@ -520,19 +523,19 @@ the result is shown in Fig~\ref{fig:kde}.
 
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_r.png}
     \caption{KDE of red}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_g.png}
     \caption{KDE of green}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_b.png}
     \caption{KDE of blue}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_code.png}
     \caption{Encoding of KDE}
   \end{subfigure}
@@ -604,19 +607,19 @@ The wide confidence band around those suspicion minimum points indicate that the
  
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/fake_min_r.png}
     \caption{KDE of red ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/fake_min_b.png}
     \caption{KDE of blue ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_reg_r.png}
     \caption{Red DS by KR($h=1.0$) with 3$\sigma$ range}
   \end{subfigure}
-  \begin{subfigure}[b]{0.24\linewidth}
+  \begin{subfigure}[b]{0.49\linewidth}
     \includegraphics[width=\linewidth]{images/kde_reg_b.png}
     \caption{Blue DS by KR($h=1.0$) with 3$\sigma$ range}
   \end{subfigure}
@@ -691,6 +694,24 @@ we may extract a rough segmentation cut from that grid.
   \label{fig:square33}
 \end{figure}
 
+A simulation sample of mu-moment can be shown below:
+
+\begin{tabular}{rrrrrr}
+  \toprule
+   i &  j &      $\mu_0$ &       $\mu_1$ &       $\mu_2$ &       $\mu_3$ \\
+  \midrule
+   1 &  1 & -6.819484 & -16.839266 & -27.710467 & -28.894263 \\
+   2 &  1 & -6.226160 & -14.358621 & -20.876583 & -21.518196 \\
+   3 &  1 & -6.079675 & -14.787542 & -21.519448 & -22.672335 \\
+   1 &  2 & -6.752096 & -16.506021 & -24.897832 & -25.775370 \\
+   2 &  2 & -6.024628 & -14.541879 & -23.120914 & -23.341720 \\
+   3 &  2 & -6.071988 & -15.319365 & -24.404012 & -22.596876 \\
+   1 &  3 & -6.834212 & -16.876402 & -26.925206 & -28.674354 \\
+   2 &  3 & -6.521210 & -15.352986 & -22.285907 & -24.476868 \\
+   3 &  3 & -6.327465 & -15.465138 & -22.457870 & -23.607122 \\
+  \bottomrule
+\end{tabular}
+
 \section{Conclusion}
 
 In this work, noise removal problem using non-parametric regression and their relationship to methods in traditional image processing 
@@ -712,7 +733,7 @@ Though those are poor enough methods compared to modern approaches. The interdis
 
 \section{Appendix: Part of Julia code used in experiment}
 
-%\subsection{Kernel regression}
+
 
 \subsection{Local polynomial}
 
@@ -793,6 +814,28 @@ for simga_imfilter_idx=1:length(simga_imfilter_range)
     #sigma_loss_list[simga_imfilter_idx] = mean((toad_filtered - toad).^2)
     sigma_loss_list[simga_imfilter_idx] = mean((toad_filtered - toad_noised).^2)
 end
+
+\end{lstlisting}
+
+\subsubsection{Variance estimation}
+
+\begin{lstlisting}
+  particles = 200
+  est_mat = zeros(4,particles)
+  
+  for (t,sigma_filter) in enumerate([0.2,0.5,1.0,2.0])
+      
+      n = prod(size(toad_noised))
+      K=Kernel.gaussian(sigma_filter)
+      nu = K[0,0] * n
+      nu_tilde = sum(K.^2) * n
+      
+      for i=1:particles
+          toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
+          toad_filtered = imfilter(Gray.(toad_noised), K)
+          est_mat[t,i] = sqrt.(sum((toad_filtered - toad_noised).^2)/(n-2*nu+nu_tilde))
+      end
+  end
 
 \end{lstlisting}
 
@@ -928,6 +971,34 @@ for i in 1:seg
     end
 end
 
+for i=1:seg
+    for j=1:seg
+        if (j+1<=seg)
+            d = sum((f_mat[i,j,:,:] .- f_mat[i,j+1,:,:]).^2,dims=2)
+            mean_d = @sprintf("%.3f",mean(d))
+            std_d = @sprintf("%.3f",std(d))
+            println("\\draw [-] (toad_$(i)_$(j).east) -- (toad_$(i)_$(j+1).west) 
+              node [midway, below] {\$ $(mean_d) \\pm $(std_d) \$};")
+        end
+        if (i+1<=seg)
+            d = sum((f_mat[i,j,:,:] .- f_mat[i+1,j,:,:]).^2,dims=2)
+            mean_d = @sprintf("%.3f",mean(d))
+            std_d = @sprintf("%.3f",std(d))
+            println("\\draw [-] (toad_$(i)_$(j).south) -- (toad_$(i+1)_$(j).north) 
+              node [midway, left] {\$ $(mean_d) \\pm $(std_d) \$};")
+        end
+    end
+end
+
+
+\end{lstlisting}
+
+\subsection{Noise Setting and Kernel regression(using filtering)}
+
+\begin{lstlisting}
+toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,25/255), size(toad))), 0.0, 1.0)
+imfilter(Gray.(toad_noised), Kernel.gaussian(1))
+mapwindow(median, toad_noised, (3,3))
 \end{lstlisting}
 
 
