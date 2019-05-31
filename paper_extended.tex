@@ -750,6 +750,38 @@ numerical problem.
 
 Anyway, Mu moments map a $M \times N$ image into a $R^4$ vector, usually we take $\log(.)$ to normalize them.
 
+A interesting point of Hu moment is that the data format required is not a strict image, 
+we can firstly convert image into such a \emph{old-statistician} style format :
+
+\begin{tabular}{rrr}
+  \toprule
+     i &    j &  intensity \\
+  \midrule
+   1.0 &  1.0 &      227.0 \\
+   2.0 &  1.0 &      199.0 \\
+   3.0 &  1.0 &      202.0 \\
+   4.0 &  1.0 &      199.0 \\
+   5.0 &  1.0 &      200.0 \\
+  \bottomrule
+\end{tabular}
+
+and then we can run bootstrap style re-sampling on it and get something like this:
+
+\begin{tabular}{rrr}
+  \toprule
+      i &     j &  intensity \\
+  \midrule
+   32.0 &  44.0 &      156.0 \\
+    1.0 &  26.0 &      194.0 \\
+   36.0 &  56.0 &       14.0 \\
+   44.0 &  21.0 &      157.0 \\
+    2.0 &  54.0 &      166.0 \\
+  \bottomrule
+\end{tabular}
+
+where shape is as same as the above one, but it can not correspond/recover to a image obviously, 
+but it can also be used to compute Hu moment. The property provide a idea to introduce bootstrap as shown below.
+
 \subsection{Integrating bootstrap}
 
 Given any feature, we can compute distance between two images using their corresponding vector given by the features. But how can we know
@@ -802,6 +834,14 @@ A simulation sample of mu-moment can be shown below:
    3 &  3 & -6.327465 & -15.465138 & -22.457870 & -23.607122 \\
   \bottomrule
 \end{tabular}
+
+Without $\log$ transform, say these raw values being $\exp(\dots)$ is too close to $0$  and hard to distinguish.
+But at the same time, $\log$ transformation is not steady when value is more close to $0$(some ugly \emph{nan}),
+ so I remove part of Hu moment.
+
+Though the looking grid of dismembered toad may be fun, why is it useful?
+In fact, we can extract a rough segmentation from it or a more fine-grained grid as in Quadtree \cite{finkel1974quad} method.
+So it can be a pre-processing step in front of KDE/intensity-based segmentation method told above to achieve a better result.
 
 \section{Conclusion}
 
@@ -924,9 +964,11 @@ end
       nu_tilde = sum(K.^2) * n
       
       for i=1:particles
-          toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
+          toad_noised = clamp.(convert(Array{Float64}, 
+            toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
           toad_filtered = imfilter(Gray.(toad_noised), K)
-          est_mat[t,i] = sqrt.(sum((toad_filtered - toad_noised).^2)/(n-2*nu+nu_tilde))
+          est_mat[t,i] = sqrt.(sum((toad_filtered - toad_noised).^2)/
+            (n-2*nu+nu_tilde))
       end
   end
 
@@ -1089,7 +1131,8 @@ end
 \subsection{Noise Setting and Kernel regression(using filtering)}
 
 \begin{lstlisting}
-toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,25/255), size(toad))), 0.0, 1.0)
+toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,25/255),
+  size(toad))), 0.0, 1.0)
 imfilter(Gray.(toad_noised), Kernel.gaussian(1))
 mapwindow(median, toad_noised, (3,3))
 \end{lstlisting}
