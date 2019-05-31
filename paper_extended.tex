@@ -109,7 +109,7 @@ by smoothing, histogram, kernel density estimation density estimation using regr
 %\lipsum[4] See Section \ref{sec:headings}.
 
 Colored(RGB) image can be seen as a 3 variables function  $f(i,j,c)$, where $i,j$ denote the location of image, $c$ denotes
-channel(red, green, blue). The function can be encoded by three matrixes as shown in Fig~\ref{fig:toad_rgb}.
+channel(red, green, blu5·e). The function can be encoded by three matrixes as shown in Fig~\ref{fig:toad_rgb}.
 
 \begin{figure}[htb]
   \centering
@@ -160,25 +160,62 @@ function and noise. In its simplest form, we can write:
 \end{equation}
 
 where $\mathbf{f}$ denote a (gray) image, $\mathbf{A}$ is a linear operation(usually a convolution)
-\footnote{This equation can be written as a verbose conventional matrix equation, 
-see document of MatLab function \bf{im2col}}, 
+%\footnote{This equation can be written as a verbose conventional matrix equation, 
+%see document of MatLab function \bf{im2col}}, 
 $\mathbf{x}$ is "true" image, $\mathbf{\eta}$ is noise term.
+
+The above compact equation can represent a convolution:
+
+$$
+(A*X)(i,j) = \sum_{s=-\infty}^\infty \sum_{t=-\infty}^\infty A(s,t)X(i-s,j-t)
+$$
+
+A example can be shown in Eq~\ref{eq:mean_filter}, though it's not used as a observe function.
+
+Conventionally, Eq~\ref{eq:inverse_problem} can also represented as its suggesting meaning, 
+a matrix equation, though this require verbose MatLab-fashion {\bf im2col}. 
+Basically, for every result pixels $(A*X)(i,j)$, assuming the Kernel matrix $A$ being finite,
+without loss of generality, we can write above equation as limit form:
+
+$$
+(A*X)(i,j) = \sum_{s=-L}^L \sum_{t=-L}^L A(s,t)X(i-s,j-t)
+$$
+
+So the elements related to $(A*X)(i,j)$ form a $(L+1)\times (L+1)$ sub-matrix in $X$. 
+We can crop the matrix, flatten it as shown in Fig~\ref{fig:flatten_matrix} and \emph{stack} them as a
+$MN \times (L+1)^2$ matrix $im2col(X)$. Then the effect of running $L+1 \times L+1$ kernel $A$ convolution on 
+$M \times N$ image matrix $X$ can be written as $(A*X)(i,j) = flatten(A) \times im2col(X)$, where $\times$ denote 
+standard matrix multiplication instead of convolution, $flatten(A)$ is a $(L+1)^2-D$ row-vector, 
+flattened version of kernel matrix A and im2col(X) is a $MN \times (L+1)^2$ matrix.
+\footnote{For detail and pretty illustration, 
+see document of MatLab function {\bf im2col} or Python version for usage in Deep Learning.} 
+
+
+
  
 \section{Smoothing: nonparametric statistic and image processing}
 
-There exists a fully equivalence which can be shown on smoothing problem.
+There exists a fully equivalence which can be shown on smoothing problem that will be surveyed in this section.
 
-\cite{wasserman2006all} state regression for pairs $((x_1,Y_1),\dots,(x_n,Y_n))$ like:
+Eq(5.1) in \cite{wasserman2006all} state regression for pairs $((x_1,Y_1),\dots,(x_n,Y_n))$ like:
 
 $$
 Y_i = r(x_i) + \epsilon_i
 $$
 
-Replacing $x_i$ with $x_{ij}=(i,j)$ ($i,j$ denote coordinates of corresponding pixel on image), compared to Eq~\ref{eq:inverse_problem},
-so the $r(x_{i,j})=r(i,j)$ denote the complex true image function. $\epsilon_i \to \epsilon_{i,j} \sim N(0,\sigma)$ is i.i.d white noise.
+Where $r(x_i)$ is "true"(regression) function, $E(\epsilon_i) = 0, \quad i=1,\dots,n$ are noise terms.
+
+Replacing feature $x_i$ with $x_{ij}=(i,j)$ ($i,j$ denote coordinates of corresponding pixel on image), 
+compared to Eq~\ref{eq:inverse_problem},
+so the $r(x_{i,j})=r(i,j)$ denote the complex true image function. 
+You can image a undulate 2d surf fig as a example.
+$\epsilon_i \to \epsilon_{i,j} \sim N(0,\sigma)$ is i.i.d white noise, 
+which may be caused by camera or imaging process.
 It's obvious that we can not specify a simple parametric model on it (For some possible parametric image model,
-see Fig~\ref{fig:parametric_model} ) so that the noise derived from underestimated model will cause misunderstanding. 
-Thus we must employ a nonparametric fashion though computer scientist may not aware it explicitly.
+see Fig~\ref{fig:parametric_model} ) 
+so that the noise derived from a such underestimated model will lead to misunderstanding. 
+Thus we must employ a nonparametric fashion, 
+though computer scientist may not aware it explicitly without help of a experienced statistician.
 
 \begin{figure}[htb]
   \centering
@@ -209,8 +246,9 @@ Thus we must employ a nonparametric fashion though computer scientist may not aw
 %\xi _{ij}(t)=P(x_{t}=i,x_{t+1}=j|y,v,w;\theta)= {\frac {\alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}{\sum _{i=1}^{N} \sum _{j=1}^{N} \alpha _{i}(t)a^{w_t}_{ij}\beta _{j}(t+1)b^{v_{t+1}}_{j}(y_{t+1})}}
 %\end{equation}
 
-As stated in \cite{solomon2011fundamentals}, a mean filtering, as simplest filter technology, give same weight to neibor pixel to smooth the
-noised to remove noise(try to find true $r(i,j)$ ). Concretely, here's a instance of $3 \times 3$ filtering:
+As stated in \cite{solomon2011fundamentals}, a mean filtering, as simplest filter technology, 
+give same weight to neighbor pixel to smooth the noise to remove noise(try to find true $r(i,j)$ ). 
+Concretely, here's a instance of $3 \times 3$ filtering:
 
 \begin{equation}
 g(i,j) = \frac{1}{9} \sum_{di=-1}^1 \sum_{dj=-1}^1 f(i+di,j+dj)
@@ -227,7 +265,21 @@ K(x_{i,j},y_{i,j}) =
 \end{cases}
 $$
 
-Which is a nature two-variables extension from box-car kernel introduced by \cite{wasserman2006all}.
+Which is a nature two-variables extension from box-car kernel introduced by Fig~4.10 in \cite{wasserman2006all}:
+
+$$
+K(x) = \frac{1}{2} I(x)
+$$
+
+Where 
+
+$$
+I(x) = \begin{cases}
+  1 & \text{if} |x| \le 1 \\
+  0 & \text{if} |x| >1.
+\end{cases}
+$$
+
 Then the kernel regression given by:
 
 $$
@@ -243,7 +295,8 @@ Mean filtering is usually weaker than median filtering, a example is shown in Fi
 Though median filtering is also a linear smoother: 
 
 $$
-\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}$$
+\hat{r}(x_{i,j})=\sum_s \sum_t l_{s,t}(x_{i,j})Y_{s,t}
+$$
 
 its hat-"matrix"(here is 4d tensor) can be represented as: 
 
@@ -252,13 +305,6 @@ l_{s,t}(x_{i,j}) = I(s=i_{median}) \times I(t=j_{median})
 $$
 
 Where $i_{median},j_{median}$ denote the coordinates of pixel which is median of neighborhood of given pixel $(i,j)$.
-
-But obviously it can not be included by kernel regression, say, 
-we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
-
-Following textbook \cite{wasserman2006all}, we can try to find different improvement other than mean-filter 
-(i.e. gaussian kernel regression(filtering) using gaussian kernel) rank-filter, or, 
-for example, local polynomial regression. 
 
 \begin{figure}[htb]
   \centering
@@ -282,6 +328,13 @@ for example, local polynomial regression.
   \label{fig:effect_noise_removal}
 \end{figure}
 
+But obviously it can not be included by kernel regression, say, 
+we can't find a general kernel function $K(x_{i,j},y_{i,j})$ which give above hat matrix. 
+
+Following textbook \cite{wasserman2006all}, we can try to find different improvement other than mean-filter 
+(i.e. gaussian kernel regression(filtering) using gaussian kernel) rank-filter, or, 
+for example, local polynomial regression. 
+
 
 \subsection{Local Polynomial Regression}
 
@@ -297,8 +350,10 @@ $$
 
 may lead too large matrix $W_x$ ($23520 \times 23520$), so the broadcast trick is used to represent the matrix as 
 $23520$ vector. However, fit a model $23520$ times using slightly different parameters is inevitable. 
+
 The result seems nice more than results given by kernel regression and median filter, 
-as shown in Fig~\ref{fig:local_poly} \footnote{The above related code is written in Python and following related code is written in Julia}.  
+as shown in Fig~\ref{fig:local_poly} 
+\footnote{The above related code is written in Python and following related code is written in Julia}.  
 The "true" means that the model is applied on true image instead of noised image,
 we can see the detail is kept finely compared to other methods which may over-smooth even in "true" image.
 The right one show $h=1$ result of smoothing the noised image, we can see the result may not be better than median regression especially considering
@@ -327,9 +382,18 @@ it costly computation time.
 \end{figure}
 
 
-And it can also provide variance information. The second sub-fig show the value of linear term, which show the linear
-"trend" in that pixel. Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
-in image processing, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
+According to textbook \cite{wasserman2006all}, the Local polynomial regression can improve result of border
+(since Nadaraya-Watson kernel estimator will tend to replicate the border value 
+and fail to match local trend which is crucial in extrapolation).
+Since the border effect of image is not significant and I use proper padding technique, the effect is not that interesting.
+But we can observe another "edge" effect instead of border: 
+
+Tt can also provide variance information. The second sub-fig show the value of linear term, 
+which show the linear "trend" in that pixel. 
+Taking absolute on it, we can compare it to so called edge detection filter such as Sobel operation and LoG
+in image processing 
+\footnote{The two is as same as Eq~\ref{eq:mean_filter} but with varying weight instead of constant weight $1/9$}
+, see Fig~\ref{fig:edge}. It's reasonable since the edge is so called high frequency feature, hence the extremely
 change matched by different methods will give consistent response as seen in those figures.
 
 
@@ -359,16 +423,22 @@ change matched by different methods will give consistent response as seen in tho
 
 \subsection{Cross validation for smoothing}
 
-%Since the image usually include too many data point. Using local property appearing in image processing 
-%will be helpful when evaluate the leave-one-out cross-validation score.
-
-Since here we have actually the true function $r(i,j)$, the vanilla risk:
+The above content use manually specified bandwidth but to model a data in reality, 
+the manually trying and evaluating the result is tedious, 
+automatically determining the bandwidth method will be welcomed.
+Fortunately, textbook \cite{wasserman2006all} establish some rules for it, for example, \emph{risk}: 
 
 $$
 R(h) = E \left( \frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2 \right)
 $$
 
-for given $h,\sigma$ (the randomness of $\hat{r}_n(x_i)$ is subject to $\sigma$ parameter of noise term $\epsilon$) 
+In textbook \cite{wasserman2006all}, author criticize the directly optimizing estimated version of risk,
+\emph{training error}, which is got by replacing unknown $r(x_i)$ with its noised version $Y_i$. 
+Because it usually lead to poor result due to over-fitting.  
+
+But while here we have actually the true function $r(i,j)$, 
+we can directly compute vanilla risk to prevent the fallback.
+For given $h,\sigma$ (the randomness of $\hat{r}_n(x_i)$ is subject to $\sigma$ parameter of noise term $\epsilon$) 
 can be approximated by Monte Calor simulation:
 
 $$
@@ -410,17 +480,25 @@ $$
 CV = \hat{R}(h)=\frac{1}{n}\sum_{i=1}^n (Y_i-\hat{r}_{-i}(x_i))^2
 $$
 
+where $\hat{r}_{-i}$ is estimation excluding $r_i$ with adjustment:
+
+$$
+\hat{r}_{(-i)}(x) = \sum_{j=1}^n Y_j l_{j,(-i)}(x)
+$$
+
+where:
+
+$$
+l_{j,(-i)}(x) = \begin{cases}
+  0 & \text{if} \quad j=i \\
+  \frac{l_j(x)}{\sum_{k \neq i} l_k(x)} & \text{if} \quad j \neq i.
+\end{cases}
+$$
+
 is equivalence to following change of kernel of convolution in gaussian kernel regression, see Fig~\ref{fig:gaussian_kernel}. 
 The result can seen in Fig~\ref{fig:crossvalidation_cv}.
 
 The Equation(5.36) in \cite{wasserman2006all} define the generalized cross validation:
-
-$$
-GCV = \frac{1}{n}\sum_{i=1}^n \left(\frac{Y_i-\hat{r}_n(x_i)}{1-\nu/n}\right)^2
-$$
-
-Where $\nu = \sum_{i=1}^n \mathbf{L}_{ii}$. Since the kernel used in gaussian kernel regression is homogeneous(i.e. it always take $0.1621$
-shown in \ref{fig:gaussian_kernel} when $h=1$.). Therefore $L_{ii} = \nu/n$, thus the GCV take same value as CV take. 
 
 \begin{figure}[htb]
   \centering
@@ -429,6 +507,19 @@ shown in \ref{fig:gaussian_kernel} when $h=1$.). Therefore $L_{ii} = \nu/n$, thu
   \label{fig:gaussian_kernel}
 \end{figure}
 
+
+$$
+GCV = \frac{1}{n}\sum_{i=1}^n \left(\frac{Y_i-\hat{r}_n(x_i)}{1-\nu/n}\right)^2
+$$
+
+Where $\nu = \sum_{i=1}^n \mathbf{L}_{ii}$. 
+Since the kernel used in gaussian kernel regression is homogeneous(i.e. it always take $0.1621$
+shown in \ref{fig:gaussian_kernel} when $h=1$.). 
+Therefore $L_{ii} = \nu/n$, thus the GCV take same value as CV take. 
+
+If we compare result of Monte Carlo and CV, we can see obviously consistency between two method.
+(The optimal values are almost located in $0.75$ both and have same U-shape)
+It turn out that CV is actually a acceptable method to select appropriate bandwidth.
 
 \subsection{Variance estimation introduced by smoothing}
 
@@ -728,6 +819,8 @@ Though those are poor enough methods compared to modern approaches. The interdis
 \bibliographystyle{unsrt}  
 \bibliography{references}  %%% Remove comment to use the external .bib file (using bibtex).
 %%% and comment out the ``the bibliography'' section.
+
+\newpage
 
 \appendix
 
