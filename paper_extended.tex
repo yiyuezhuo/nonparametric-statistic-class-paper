@@ -60,6 +60,8 @@
     showstringspaces = false,
 }
 
+\DeclareMathOperator*{\argmax}{arg\,max}
+
 
 
 
@@ -342,7 +344,31 @@ Basically, polynomial regression fit a "delta" model $f_{i,j}(di,dj)$ for every 
 as estimation of $\hat{r}(x_{i,j})$. Especially, the linear formulation with kernel weighting is most 
 interesting considering higher order may causing numerical problem.
 
-The vanilla equation:
+The weight function around point $x_i$ given by textbook \cite{wasserman2006all} is $w_i(x) = K((x_i - x)/h)$,
+which is generalized to 2d format:
+
+$$
+w_{i,j}(s,t) = K((|i-s|+|j-t|)/h)
+$$
+
+And the Eq (5.54) in textbook \cite{wasserman2006all} is generalized to:
+
+$$
+X_{ij} = \begin{bmatrix}
+  1 & i-1 + j-1 \\
+  1 & i-2 + j-1 \\
+  1 & i-3 + j-1 \\
+  \vdots & \vdots \\
+  1 & i-m + j-m
+\end{bmatrix}
+$$
+
+The specification seems not that nature. 
+The second columns will be zero for $(i,j)$ itself with its backslash, positive for right-bottom term 
+and negative for left-top terms. To find a more nature two variable extension may not be that hard,
+but for simplicity the form is adopted.
+
+The vanilla equation in Theroem 5.57 in \cite{wasserman2006all}:
 
 $$
 \mathbf{l}(x) = e_1^T (X_x^T W_x X_x)^{-1} X_x^T W_x
@@ -439,7 +465,7 @@ Because it usually lead to poor result due to over-fitting.
 But while here we have actually the true function $r(i,j)$, 
 we can directly compute vanilla risk to prevent the fallback.
 For given $h,\sigma$ (the randomness of $\hat{r}_n(x_i)$ is subject to $\sigma$ parameter of noise term $\epsilon$) 
-can be approximated by Monte Calor simulation:
+can be approximated by Monte Carlo simulation:
 
 $$
 R(h) \approx \frac{1}{T} \sum_{t=1}^T \frac{1}{n}\sum_{i=1}^n(\hat{r}_n(x_i)-r(x_i))^2
@@ -545,32 +571,40 @@ $n = 168 \times 140 = 23520$,$\nu = n \times s \times K[0,0]$,
 $\tilde{\nu} = \sum_{i=-2}^2\sum_{j=-2}^2 K[i,j]^2$. 
 Set $\sigma=50$(In Julia it's $\sigma=0.098$), 
 the simulation distribution of $\hat{\sigma}^2$ can be seen in Fig~\ref{fig:std_est}. 
+
 The interesting thing is that all of them fail to cover true point $0.098$, when $h$ become larger,
 the bias is even worsen, though the range of $(h=0.2)$, $[0.1000,0.1024]$ almost capture it.
 It's not that surprise considering the consistency condition of estimator, 
 $\nu=o(n),\tilde{\nu}=o(n)$ which is not satisfied in this case.
 
+
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_1.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_2.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=0.5$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_3.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=1.0$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/std_est_4.png}
     \caption{Dist of $\hat{\sigma}^2$ ($h=2.0$)}
   \end{subfigure}
   \caption{simulation distribution of $\hat{\sigma}^2$(samples = 200)}
   \label{fig:std_est}
 \end{figure}
+
+Is it possible that two conditions listed above can be fulfilled? Yes, in traditional setting,
+the support set is confined into a limited region. So with number of sampling $n$ increasing,
+the point of that region, especially a given neighbor region of point $x$ will become denser and denser as well.
+It lead to many points which are very close to $x$ and "deprive"/"share" weights from $x$ in hat-matrix $L$.
+Thus $\nu=o(n),\tilde{\nu}=o(n)$ can be reached.
 
 \section{Density estimation and threshold segmentation}
 
@@ -581,19 +615,19 @@ compared to using gray histogram directly. For example, the result of toad is sh
 
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/hist_gray.png}
     \caption{Hist of gray}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/hist_r.png}
     \caption{Hist of red}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/hist_g.png}
     \caption{Hist of green}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/hist_b.png}
     \caption{Hist of blue}
   \end{subfigure}
@@ -614,19 +648,19 @@ the result is shown in Fig~\ref{fig:kde}.
 
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_r.png}
     \caption{KDE of red}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_g.png}
     \caption{KDE of green}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_b.png}
     \caption{KDE of blue}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_code.png}
     \caption{Encoding of KDE}
   \end{subfigure}
@@ -645,10 +679,19 @@ but taking minimum value of KDE numerically can be employed.).
 So in principle we can get $4\times 3\times 3=36$ components, 
 but since RGB is correlated in intensity(say, more red value imply more green and blue value as well.), 
 the number of valid components is only $18$ as shown in Fig~\ref{fig:kde}.
-Those components can be split into a image, as shown in Fig~\ref{fig:splitting}. 
+
+Every split components can draw a binary image, as shown in Fig~\ref{fig:splitting}. 
 The processing result of it is called segmentation, a classic field in image processing. 
-Anyway the method using KDE is not that useful compared to modern method using CNN \cite{long2015fully} or 
-even early method using MRF\cite{panjwani1995markov}. 
+A modern application of it may be auto driving, the road is segmented therefore we can determine the
+relative position of car to adjust our direction.
+
+Honestly, the result seems not that fine. Air is segmented clearly and smooth, that's good.
+But land part of background and eyes of toad is segmented into one class, 
+and the last one include part of water and ... edge(noise)? 
+Anyway like many abandoned traditional statistic method, 
+the method using KDE is not that useful compared to modern method using CNN \cite{long2015fully} or 
+even early method using MRF\cite{panjwani1995markov}. I just propose a example to show a application.
+
 
 \begin{figure}[htb]
   \centering
@@ -698,19 +741,19 @@ The wide confidence band around those suspicion minimum points indicate that the
  
 \begin{figure}[htb]
   \centering
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/fake_min_r.png}
     \caption{KDE of red ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/fake_min_b.png}
     \caption{KDE of blue ($h=0.2$)}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_reg_r.png}
     \caption{Red DS by KR($h=1.0$) with 3$\sigma$ range}
   \end{subfigure}
-  \begin{subfigure}[b]{0.49\linewidth}
+  \begin{subfigure}[b]{0.4\linewidth}
     \includegraphics[width=\linewidth]{images/kde_reg_b.png}
     \caption{Blue DS by KR($h=1.0$) with 3$\sigma$ range}
   \end{subfigure}
@@ -718,6 +761,59 @@ The wide confidence band around those suspicion minimum points indicate that the
   \label{fig:DS_REG}
 \end{figure}
 
+\section{Nonparametric distribution function estimation and Data Augmentation}
+
+Data Augmentation technique is broadly used in Machine Learning to decrease over-fitting.
+For example, The renewal symbol of Deep Learning, 
+AlexNet \cite{krizhevsky2012imagenet} use random crop, flip, channel swap and
+principle components analysis to create new image from existing images to extend data-set to increase
+the generalization. It's a regularizer which help network to prevent to seek wrong feature to do its task such as
+special color pattern or position pattern.
+
+We can find a basic explanation in term of nonparametric density estimation. 
+For a given data-set consisting of $N$ images, 
+we can define a ECDF to denote a corresponding distribution $F_N(x)$,
+while we assume a "true" distribution $F(x)$ which "generate" those images.
+Therefore, $N$ images is a distribution of $F(x)$ and $F_N(x)$ is a approximation or estimation of $F(x)$.
+
+Now we have a model family $M$, the idea model is $m \in M$ which get optimal performance on $F(x)$.
+That's:
+
+$$
+m = \argmax_{m \in M} E_{F(x)} U(x,m)
+$$
+
+where $U(x,m)$ is utility function which measure how well model $m$ cooperate with data $x$.
+For concrete, $x$ may be a image $I(x)$(a image including a pretty toad) and a tag $T(x)$("toad").
+The model try to predict the tag of $I(x)$ as "toad" instead of wood or car.
+
+Since $F(x)$ is not observed, we can directly replace $F(x)$ with its estimation $F_E(x)$ to get a approximation.
+
+$$
+m = \argmax_{m \in M} E_{F_E(x)} U(x,m) = \argmax_{m \in M} \sum_{n=1}^N U(x_n, m)
+$$
+
+The problem may be still hard since we will need to find a decent optimization algorithm to reach the $\max$.
+But a interesting observation is that you can, in other hand, increase the performance of resultant model
+by Data Augmentation. 
+Obviously, applying random transforms discussed above(random crop,PCA,...) is equivalence to 
+transform distribution $F_E(x)$ to another "augmented" distribution $F_A(x)$: 
+
+$$
+m = \argmax_{m \in M} E_{F_A(x)} U(x,m) = \argmax_{m \in M} \sum_{n=1}^N E_{F_{A(x_n)}(x)} U(x_n, m)
+$$
+
+Where $F_{A(x_n)}(x)$ is a distribution which center is on $x_n$.
+For example, we can define $z_n = x_n + \epsilon_n, \epsilon_n \sim N(\mathbf{0}, \Sigma)$.
+The optimization can be done by algorithms such as Monte Carlo gradient estimation \cite{Weber2015Gradient}.
+In AlexNet\cite{krizhevsky2012imagenet}, the distribution is implicitly defined by some random transforms:
+$z \sim F_{A(x_n)} \triangleq g(z,\epsilon)$ where random noise $\epsilon$ determine if do a transform and 
+its parameter and the full transform is denoted by $g(.)$.
+
+We impose some density on neighbor of given image $x$ such as those images which can be constructed easily
+by swapping color channels, so that now the green, red, black and blue color toad get comparable weight 
+compared to the vanilla yellow toad. 
+It's a KDE-like fashion, I try to convey the points in class many times though seems fail.
 
 \section{Bootstrap and confidence of feature detecting}
 
@@ -749,38 +845,6 @@ The full definition of Hu moments include $h_5,h_6$, but here I don't use them d
 numerical problem. 
 
 Anyway, Mu moments map a $M \times N$ image into a $R^4$ vector, usually we take $\log(.)$ to normalize them.
-
-A interesting point of Hu moment is that the data format required is not a strict image, 
-we can firstly convert image into such a \emph{old-statistician} style format :
-
-\begin{tabular}{rrr}
-  \toprule
-     i &    j &  intensity \\
-  \midrule
-   1.0 &  1.0 &      227.0 \\
-   2.0 &  1.0 &      199.0 \\
-   3.0 &  1.0 &      202.0 \\
-   4.0 &  1.0 &      199.0 \\
-   5.0 &  1.0 &      200.0 \\
-  \bottomrule
-\end{tabular}
-
-and then we can run bootstrap style re-sampling on it and get something like this:
-
-\begin{tabular}{rrr}
-  \toprule
-      i &     j &  intensity \\
-  \midrule
-   32.0 &  44.0 &      156.0 \\
-    1.0 &  26.0 &      194.0 \\
-   36.0 &  56.0 &       14.0 \\
-   44.0 &  21.0 &      157.0 \\
-    2.0 &  54.0 &      166.0 \\
-  \bottomrule
-\end{tabular}
-
-where shape is as same as the above one, but it can not correspond/recover to a image obviously, 
-but it can also be used to compute Hu moment. The property provide a idea to introduce bootstrap as shown below.
 
 \subsection{Integrating bootstrap}
 
@@ -835,23 +899,21 @@ A simulation sample of mu-moment can be shown below:
   \bottomrule
 \end{tabular}
 
-Without $\log$ transform, say these raw values being $\exp(\dots)$ is too close to $0$  and hard to distinguish.
-But at the same time, $\log$ transformation is not steady when value is more close to $0$(some ugly \emph{nan}),
- so I remove part of Hu moment.
-
-Though the looking grid of dismembered toad may be fun, why is it useful?
-In fact, we can extract a rough segmentation from it or a more fine-grained grid as in Quadtree \cite{finkel1974quad} method.
-So it can be a pre-processing step in front of KDE/intensity-based segmentation method told above to achieve a better result.
-
 \section{Conclusion}
 
-In this work, noise removal problem using non-parametric regression and their relationship to methods in traditional image processing 
-is discovered and illustrated. Kernel regression is fast and effective, while local polynomial is too costly and fail to get significant
-improvement compared to kernel regression. How to use cross validation of theory, leave-one-out fashion and GCV are surveyed, it show
-a idea curve which is similar to one listed in \cite{wasserman2006all}. Variance estimation using smoothing get almost exact result. Density estimation
-technique such as histogram and kernel density is used to build a rough segmentation, the variance of density estimation introduced by
-converting problem to regression is used to suppress fake minimum therefore may help to automatically cutting point detection. Finally, 
-how to incorporate the variance information provided by bootstrap into Hu moment to evaluate their difference is shown.
+In this work, noise removal problem using non-parametric regression and 
+their relationship to methods in traditional image processing is discovered and illustrated. 
+Kernel regression is fast and effective, 
+while local polynomial is too costly and fail to get significant improvement compared to kernel regression. 
+How to use cross validation of theory, leave-one-out fashion and GCV are surveyed, 
+it show a idea curve which is similar to one listed in \cite{wasserman2006all}. 
+Variance estimation using smoothing get almost exact result. 
+Density estimation technique such as histogram and kernel density is used to build a rough segmentation, 
+the variance of density estimation introduced by converting problem to regression 
+is used to suppress fake minimum therefore may help to automatically cutting point detection. 
+A relationship between nonparametric distribution function and modern data Augmentation technique is discussed.
+Finally, how to incorporate the variance information provided by bootstrap into Hu moment 
+to evaluate their difference is shown.
 
 Though those are poor enough methods compared to modern approaches. The interdisciplinary relationship is still interesting. 
 
@@ -950,7 +1012,7 @@ end
 
 \end{lstlisting}
 
-\subsubsection{Variance estimation}
+\subsection{Variance estimation}
 
 \begin{lstlisting}
   particles = 200
@@ -964,11 +1026,9 @@ end
       nu_tilde = sum(K.^2) * n
       
       for i=1:particles
-          toad_noised = clamp.(convert(Array{Float64}, 
-            toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
+          toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,sigma_noise/255), size(toad))), 0.0, 1.0)
           toad_filtered = imfilter(Gray.(toad_noised), K)
-          est_mat[t,i] = sqrt.(sum((toad_filtered - toad_noised).^2)/
-            (n-2*nu+nu_tilde))
+          est_mat[t,i] = sqrt.(sum((toad_filtered - toad_noised).^2)/(n-2*nu+nu_tilde))
       end
   end
 
@@ -1131,8 +1191,7 @@ end
 \subsection{Noise Setting and Kernel regression(using filtering)}
 
 \begin{lstlisting}
-toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,25/255),
-  size(toad))), 0.0, 1.0)
+toad_noised = clamp.(convert(Array{Float64}, toad + rand(Normal(0,25/255), size(toad))), 0.0, 1.0)
 imfilter(Gray.(toad_noised), Kernel.gaussian(1))
 mapwindow(median, toad_noised, (3,3))
 \end{lstlisting}
